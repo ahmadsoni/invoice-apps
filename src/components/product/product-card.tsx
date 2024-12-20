@@ -1,8 +1,7 @@
 import { useState } from 'react'
-import { Minus, Plus } from 'lucide-react'
+import { MinusCircle, PlusCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Product, CartItem } from '../../types/product'
-import { VariantSelector } from './product-variant-selector'
 
 interface ProductCardProps {
   product: Product
@@ -45,169 +44,174 @@ export function ProductCard({ product, cartItem, onAddToCart, onUpdateQuantity, 
     return quantity * selectedVariant.price
   }
 
-  const sizeOptions = Array.from(new Set(product.variants.map(v => v.size)))
-    .filter((size): size is NonNullable<typeof product.variants[0]['size']> => !!size)
-    .map(size => ({
-        label: size,
-        value: size,
-        icon: size === 'Standard' ? '/icons/standard.svg' : '/icons/large.svg'
-    }))
-
-
-  const flavorOptions = Array.from(new Set(product.variants.map(v => v.flavor)))
-    .filter((flavor): flavor is NonNullable<typeof product.variants[0]['flavor']> => !!flavor)
-    .map(flavor => ({
-      label: flavor,
-      value: flavor,
-      icon: `/icons/${flavor.toLowerCase()}.svg`
-    }))
-
   return (
-    <div className="flex gap-6 p-4 border rounded-lg">
-      <div className="flex gap-4">
-        <div className="relative w-[120px] h-[120px]">
+    <div className="flex p-4 gap-4 border rounded-lg bg-white">
+      {/* Left Section - Product Image */}
+      <div className="w-[120px] space-y-2">
+        <div className="w-[120px] h-[120px]">
           <img
             src={product.image}
             alt={product.name}
-            className="object-cover rounded-lg"
+            className="w-full h-full object-cover rounded-lg"
           />
         </div>
-        {product.thumbnails && (
-          <div className="flex flex-col gap-2">
-            {product.thumbnails.map((thumb, idx) => (
-              <div key={idx} className="relative w-[30px] h-[30px]">
-                <img
-                  src={thumb}
-                  alt={`${product.name} thumbnail ${idx + 1}`}
-                  className="object-cover rounded-sm"
-                />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="flex-1">
-        <h3 className="text-lg font-semibold">{product.name}</h3>
-        <p className="text-lg">{formatPrice(product.basePrice)}</p>
-        <div className="flex gap-2 text-sm text-muted-foreground">
-          {product.category.map((cat, idx) => (
-            <span key={idx}>
-              {idx + 1}. {cat}
-            </span>
+        <div className="flex gap-1">
+          {product.thumbnails?.map((thumb, idx) => (
+            <div key={idx} className="w-6 h-6 border border-gray-200 rounded">
+              <img 
+                src={thumb}
+                alt={`Thumbnail ${idx + 1}`}
+                className="w-full h-full object-cover"
+              />
+            </div>
           ))}
         </div>
-        <p className="text-sm text-muted-foreground mt-1">{product.description}</p>
-
-        {sizeOptions.length > 0 && (
-          <div className="mt-4">
-            <VariantSelector
-              label="Product Size"
-              options={sizeOptions}
-              value={selectedSize}
-              onChange={(newSize) => {
-                setSelectedSize(newSize)
-                const newVariant = product.variants.find(v => v.size === newSize && v.flavor === selectedFlavor)
-                if (newVariant) {
-                  const currentQuantity = cart.find(item => 
-                    item.product.id === product.id && 
-                    item.selectedVariant.size === selectedSize &&
-                    item.selectedVariant.flavor === selectedFlavor
-                  )?.quantity || 0
-                  onUpdateQuantity(product.id, newSize, selectedFlavor, currentQuantity)
-                }
-              }}
-            />
-          </div>
-        )}
-
-        {flavorOptions.length > 0 && (
-          <div className="mt-4">
-            <VariantSelector
-              label="Rasa"
-              options={flavorOptions}
-              value={selectedFlavor}
-              onChange={(newFlavor) => {
-                setSelectedFlavor(newFlavor)
-                const newVariant = product.variants.find(v => v.size === selectedSize && v.flavor === newFlavor)
-                if (newVariant) {
-                  const currentQuantity = cart.find(item => 
-                    item.product.id === product.id && 
-                    item.selectedVariant.size === selectedSize &&
-                    item.selectedVariant.flavor === selectedFlavor
-                  )?.quantity || 0
-                  onUpdateQuantity(product.id, selectedSize, newFlavor, currentQuantity)
-                }
-              }}
-            />
-          </div>
-        )}
       </div>
 
-      <div className="flex flex-col items-end gap-4">
-        <p className="text-lg font-semibold">
-          Sub total: {formatPrice(getSubtotal())}
-        </p>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => {
-              const currentItem = cart.find(item => 
-                item.product.id === product.id && 
-                item.selectedVariant.size === selectedSize &&
-                item.selectedVariant.flavor === selectedFlavor
-              )
-              if (currentItem && currentItem.quantity > 0) {
-                onUpdateQuantity(
-                  product.id,
-                  selectedSize,
-                  selectedFlavor,
-                  currentItem.quantity - 1
-                )
-              }
-            }}
-            disabled={!cart.find(item => 
-              item.product.id === product.id && 
-              item.selectedVariant.size === selectedSize &&
-              item.selectedVariant.flavor === selectedFlavor
-            )?.quantity}
-          >
-            <Minus className="w-4 h-4" />
-          </Button>
-          <span className="w-12 text-center">
-            {cart.find(item => 
-              item.product.id === product.id && 
-              item.selectedVariant.size === selectedSize &&
-              item.selectedVariant.flavor === selectedFlavor
-            )?.quantity || 0}
-          </span>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => {
-              const currentItem = cart.find(item => 
-                item.product.id === product.id && 
-                item.selectedVariant.size === selectedSize &&
-                item.selectedVariant.flavor === selectedFlavor
-              )
-              if (currentItem) {
-                onUpdateQuantity(
-                  product.id,
-                  selectedSize,
-                  selectedFlavor,
-                  currentItem.quantity + 1
-                )
-              } else {
-                handleAddToCart()
-              }
-            }}
-          >
-            <Plus className="w-4 h-4" />
-          </Button>
+      {/* Middle Section - Product Details */}
+      <div className="flex-1">
+        <div className="flex justify-between">
+          <div>
+            <h3 className="text-lg font-medium">{product.name}</h3>
+            <p className="text-gray-900 font-bold text-">{formatPrice(product.basePrice)}</p>
+            <div className="flex gap-2 text-sm text-gray-500 mt-1">
+              {product.category.map((cat, idx) => (
+                <span key={idx}>{idx + 1}. {cat}</span>
+              ))}
+            </div>
+            <p className="text-sm text-gray-600 mt-1">{product.description}</p>
+          </div>
+          <div className="text-end">
+            <p className="text-sm text-gray-500">Sub total:</p>
+            <p className="text-lg font-bold text-blue-600">
+              {formatPrice(getSubtotal())}
+            </p>
+          </div>
         </div>
+
+        {/* Variant Selectors */}
+        <div className="mt-6 space-y-4">
+          {/* Size Selector */}
+          <div className="space-y-1">
+            <p className="text-sm text-gray-600">Product Size: -</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setSelectedSize('Standard')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded border ${
+                  selectedSize === 'Standard' 
+                    ? 'bg-blue-50 border-blue-200' 
+                    : 'border-gray-200 hover:bg-gray-50'
+                }`}
+              >
+                <img src="/icons/standard.svg" alt="" className="w-4 h-4" />
+                <span>Standard</span>
+              </button>
+              <button
+                onClick={() => setSelectedSize('Large')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded border ${
+                  selectedSize === 'Large' 
+                    ? 'bg-blue-50 border-blue-200' 
+                    : 'border-gray-200 hover:bg-gray-50'
+                }`}
+              >
+                <img src="/icons/large.svg" alt="" className="w-4 h-4" />
+                <span>Large</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Flavor Selector */}
+          <div className="space-y-1">
+            <p className="text-sm text-gray-600">Rasa: -</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setSelectedFlavor('Original')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded border ${
+                  selectedFlavor === 'Original' 
+                    ? 'bg-blue-50 border-blue-200' 
+                    : 'border-gray-200 hover:bg-gray-50'
+                }`}
+              >
+                <img src="/icons/original.svg" alt="" className="w-4 h-4" />
+                <span>Original</span>
+              </button>
+              <button
+                onClick={() => setSelectedFlavor('Choco')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded border ${
+                  selectedFlavor === 'Choco' 
+                    ? 'bg-blue-50 border-blue-200' 
+                    : 'border-gray-200 hover:bg-gray-50'
+                }`}
+              >
+                <img src="/icons/choco.svg" alt="" className="w-4 h-4" />
+                <span>Choco</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Section - Quantity Controls */}
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => {
+            const currentItem = cart.find(item => 
+              item.product.id === product.id && 
+              item.selectedVariant.size === selectedSize &&
+              item.selectedVariant.flavor === selectedFlavor
+            )
+            if (currentItem && currentItem.quantity > 0) {
+              onUpdateQuantity(
+                product.id,
+                selectedSize,
+                selectedFlavor,
+                currentItem.quantity - 1
+              )
+            }
+          }}
+          disabled={!cart.find(item => 
+            item.product.id === product.id && 
+            item.selectedVariant.size === selectedSize &&
+            item.selectedVariant.flavor === selectedFlavor
+          )?.quantity}
+        >
+          <MinusCircle className="w-4 h-4" />
+        </Button>
+        <span className="w-8 text-center">
+          {cart.find(item => 
+            item.product.id === product.id && 
+            item.selectedVariant.size === selectedSize &&
+            item.selectedVariant.flavor === selectedFlavor
+          )?.quantity || 0}
+        </span>
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => {
+            const currentItem = cart.find(item => 
+              item.product.id === product.id && 
+              item.selectedVariant.size === selectedSize &&
+              item.selectedVariant.flavor === selectedFlavor
+            )
+            if (currentItem) {
+              onUpdateQuantity(
+                product.id,
+                selectedSize,
+                selectedFlavor,
+                currentItem.quantity + 1
+              )
+            } else {
+              handleAddToCart()
+            }
+          }}
+        >
+          <PlusCircle className="w-4 h-4" />
+        </Button>
       </div>
     </div>
   )
 }
-

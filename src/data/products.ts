@@ -5,14 +5,14 @@ export const products: Product[] = [
     id: "1",
     name: "Almond Milk",
     basePrice: 65000,
-    image: "/placeholder.svg?height=200&width=200",
+    image: "/src/assets/almond-milk.svg?height=200&width=200",
     category: ["Minuman"],
     description: "Fresh Almond Milk with no Sugar",
     thumbnails: [
-      "/placeholder.svg?height=50&width=50",
-      "/placeholder.svg?height=50&width=50",
-      "/placeholder.svg?height=50&width=50",
-      "/placeholder.svg?height=50&width=50"
+      "/src/assets/almond-milk.svg?height=50&width=50",
+      "/src/assets/almond-milk.svg?height=50&width=50",
+      "/src/assets/almond-milk.svg?height=50&width=50",
+      "/src/assets/almond-milk.svg?height=50&width=50"
     ],
     variants: [
       {
@@ -41,14 +41,14 @@ export const products: Product[] = [
     id: "2",
     name: "Chia Jam",
     basePrice: 68000,
-    image: "/placeholder.svg?height=200&width=200",
+    image: "/src/assets/chia-jam.svg?height=200&width=200",
     category: ["Makanan", "Selai"],
     description: "Delicious Taste\nFor Quality Purpose, we Import RAW Materials from North America...",
     thumbnails: [
-      "/placeholder.svg?height=50&width=50",
-      "/placeholder.svg?height=50&width=50",
-      "/placeholder.svg?height=50&width=50",
-      "/placeholder.svg?height=50&width=50"
+      "/src/assets/chia-jam.svg?height=50&width=50",
+      "/src/assets/chia-jam-strobery.svg?height=50&width=50",
+      "/src/assets/chia-jam-bluebery.svg?height=50&width=50",
+      "/src/assets/chia-jam-orange.svg?height=50&width=50"
     ],
     variants: [
       {

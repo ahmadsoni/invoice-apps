@@ -29,7 +29,7 @@ export default function InvoiceFooter({
   onBankAccountChange,
   onTermsChange,
 }: InvoiceFooterProps) {
-  const [grandTotal, setGrandTotal] = useState(555000);
+  const [grandTotal, _] = useState(555000);
   const [promoFields, setPromoFields] = useState<DynamicField[]>([]);
   const [vatFields, setVatFields] = useState<DynamicField[]>([]);
 

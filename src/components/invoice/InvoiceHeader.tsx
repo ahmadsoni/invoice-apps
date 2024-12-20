@@ -13,7 +13,6 @@ interface InvoiceHeaderProps {
   onInvoiceNumberChange?: (value: string) => void;
   onDateChange?: (value: string) => void;
   onDueDateChange?: (value: string) => void;
-  children?: React.ReactNode;
 }
 
 export function InvoiceHeader({
@@ -26,7 +25,6 @@ export function InvoiceHeader({
   onInvoiceNumberChange,
   onDateChange,
   onDueDateChange,
-  children,
 }: InvoiceHeaderProps) {
   return (
     <Card className="p-6">
@@ -101,7 +99,22 @@ export function InvoiceHeader({
           </div>
         </div>
         <hr className="border-1 my-4" />
-        {children}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex flex-row gap-2 justify-center items-center">
+            <Button variant={'outline'} className="text-start flex justify-start mt-1 hover:cursor-default w-1/3">Bill to</Button>
+            <Input
+              placeholder="Invoice recipient name"
+              className="mt-1.5"
+            />
+          </div>
+          <div className="flex flex-row gap-2 justify-center items-center">
+            <Button variant={'outline'} className="text-start flex justify-start mt-1 hover:cursor-default w-1/3">Ship to</Button>
+            <Input
+              placeholder="Invoice recipient address"
+              className="mt-1.5"
+            />
+          </div>
+        </div>
       </div>
     </Card>
   );
