@@ -97,7 +97,6 @@ export function CreateInvoice() {
               }
             />
             <InvoiceNotes />
-
             <div className="flex justify-between">
               <button className="text-destructive bg-transparent" onClick={() => navigate("/")}>
                 Cancel
