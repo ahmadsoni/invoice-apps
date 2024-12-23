@@ -11,14 +11,13 @@ import { Card } from "@/components/ui/card";
 import { Plus, Minus, Trash2 } from 'lucide-react';
 import { CartItem } from "@/types/product";
 import { formatRupiah } from "@/lib/formater";
-import { useEffect } from "react";
 
 type InvoiceTableProps = {
   items: CartItem[];
   onQuantityChange: (productId: string, variantSize: string | undefined, variantFlavor: string | undefined, newQuantity: number) => void;
   onRemoveItem: (productId: string, variantSize: string | undefined, variantFlavor: string | undefined) => void;
   onShowCatalog: () => void;
-  onGrandTotalChange: (grandTotal: number) => void;
+  grandTotal: number;
 };
 
 
@@ -27,15 +26,8 @@ export function InvoiceTable({
   onQuantityChange,
   onRemoveItem,
   onShowCatalog,
-  onGrandTotalChange
+  grandTotal
 }: InvoiceTableProps) {
-  const calculateSubtotal = () =>
-    items.reduce((sum, item) => sum + item.selectedVariant.price * item.quantity, 0);
-  const total = calculateSubtotal();
-  useEffect(()=> {
-    onGrandTotalChange(total)
-  }, [calculateSubtotal])
-
   return (
     <Card className="p-6">
       <div className="flex justify-between items-center mb-4">
@@ -128,7 +120,7 @@ export function InvoiceTable({
       <div className="mt-4 space-y-2">
         <div className="flex justify-between text-base font-bold pt-2 border-t">
           <span>Total</span>
-          <span>Rp {formatRupiah(total)}</span>
+          <span>Rp {formatRupiah(grandTotal)}</span>
         </div>
       </div>
     </Card>

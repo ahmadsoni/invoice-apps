@@ -4,7 +4,7 @@ import { InvoiceTable } from "@/components/invoice/InvoiceTable"
 import { CartItem } from "@/types/product"
 import { products } from "@/data/products";
 import { Card } from "../ui/card";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ProductProps } from '../../types/product'
 
 export function Product({catalog, invoice}: ProductProps) {
@@ -67,7 +67,12 @@ export function Product({catalog, invoice}: ProductProps) {
       item.selectedVariant.flavor !== variantFlavor
     ))
   }
-
+   const calculateSubtotal = () =>
+      cart.reduce((sum, item) => sum + item.selectedVariant.price * item.quantity, 0);
+    const total = calculateSubtotal();
+    useEffect(()=> {
+      invoice.onGrandTotalChange(total)
+    }, [calculateSubtotal])
   return (
     <Card className="h-full">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -81,7 +86,7 @@ export function Product({catalog, invoice}: ProductProps) {
           onQuantityChange={handleUpdateQuantity}
           onRemoveItem={handleRemoveItem}
           onShowCatalog={() => setActiveTab('catalog')}
-          onGrandTotalChange={invoice.onGrandTotalChange}
+          grandTotal={invoice.grandTotal}
         />
       </TabsContent>
       <TabsContent value="catalog">

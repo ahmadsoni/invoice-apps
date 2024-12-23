@@ -25,6 +25,7 @@ export interface CartItem {
 
 export interface InvoiceTableProps {
   onGrandTotalChange: (grandTotal: number) => void;
+  grandTotal: number;
 }
 
 export interface ProductCatalogProps {

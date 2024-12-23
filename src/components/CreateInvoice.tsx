@@ -132,6 +132,7 @@ export function CreateInvoice() {
                   onGrandTotalChange: (value) =>
                 setInvoiceData({ ...invoiceData, grandTotal: value })
               ,
+                grandTotal: invoiceData.grandTotal
               }}
             />
             <InvoiceFooter
