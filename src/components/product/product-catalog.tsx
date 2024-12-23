@@ -1,5 +1,3 @@
-
-import { useState } from 'react'
 import { Search, Filter, Info } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -20,45 +18,25 @@ import {
 } from "@/components/ui/select"
 import { ProductCard } from './product-card'
 import { Pagination } from '../pagination/pagination'
-import { products } from '../../data/products'
-import { CartItem } from '../../types/product'
-
-const allCategories = Array.from(
-  new Set(products.flatMap(product => product.category))
-)
-
-const ITEMS_PER_PAGE = 5
-
-interface ProductCatalogProps {
-  cart: CartItem[]
-  onAddToCart: (item: CartItem) => void
-  onUpdateQuantity: (productId: string, variantSize: string | undefined, variantFlavor: string | undefined, newQuantity: number) => void
-}
-
-export function ProductCatalog({ cart, onAddToCart, onUpdateQuantity }: ProductCatalogProps) {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
-  const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(ITEMS_PER_PAGE)
+import { ProductCatalogProps } from '../../types/product'
 
 
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesCategory = selectedCategories.length === 0 || 
-      product.category.some(cat => selectedCategories.includes(cat))
-    return matchesSearch && matchesCategory
-  })
-
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage)
-  const paginatedProducts = filteredProducts.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  )
-
-  const handleAddToCart = (item: CartItem) => {
-    onAddToCart(item)
-  }
-
+export function ProductCatalog({
+  searchQuery,
+  selectedCategories,
+  currentPage,
+  itemsPerPage,
+  cart,
+  paginatedProducts,
+  totalPages,
+  allCategories,
+  onSearchChange,
+  onCategoryChange,
+  onPageChange,
+  onItemsPerPageChange,
+  onAddToCart,
+  onUpdateQuantity
+}: ProductCatalogProps) {
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
@@ -82,10 +60,10 @@ export function ProductCatalog({ cart, onAddToCart, onUpdateQuantity }: ProductC
                   key={category}
                   checked={selectedCategories.includes(category)}
                   onCheckedChange={(checked) => {
-                    setSelectedCategories(prev =>
+                    onCategoryChange(
                       checked
-                        ? [...prev, category]
-                        : prev.filter(c => c !== category)
+                        ? [...selectedCategories, category]
+                        : selectedCategories.filter(c => c !== category)
                     )
                   }}
                 >
@@ -100,7 +78,7 @@ export function ProductCatalog({ cart, onAddToCart, onUpdateQuantity }: ProductC
               placeholder="Search Product"
               className="pl-10 w-[200px]"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => onSearchChange(e.target.value)}
             />
           </div>
         </div>
@@ -112,7 +90,7 @@ export function ProductCatalog({ cart, onAddToCart, onUpdateQuantity }: ProductC
             key={product.id}
             product={product}
             cart={cart}
-            onAddToCart={handleAddToCart}
+            onAddToCart={onAddToCart}
             onUpdateQuantity={onUpdateQuantity}
           />
         ))}
@@ -124,8 +102,8 @@ export function ProductCatalog({ cart, onAddToCart, onUpdateQuantity }: ProductC
           <Select
             value={itemsPerPage.toString()}
             onValueChange={(value) => {
-              setItemsPerPage(Number(value))
-              setCurrentPage(1)
+              onItemsPerPageChange(Number(value));
+              onPageChange(1);
             }}
           >
             <SelectTrigger className="w-[70px]">
@@ -139,16 +117,15 @@ export function ProductCatalog({ cart, onAddToCart, onUpdateQuantity }: ProductC
             </SelectContent>
           </Select>
           <span className="text-sm text-muted-foreground">
-            Result {(currentPage - 1) * itemsPerPage + 1} of {filteredProducts.length} Data
+            Result {(currentPage - 1) * itemsPerPage + 1} of {paginatedProducts.length} Data
           </span>
         </div>
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
-          onPageChange={setCurrentPage}
+          onPageChange={onPageChange}
         />
       </div>
     </div>
   )
 }
-

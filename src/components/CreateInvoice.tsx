@@ -4,20 +4,29 @@ import { useInvoiceStore } from "@/store/invoiceStore";
 import { Button } from "@/components/ui/button";
 import { Breadcrumb } from "./layout/Breadcrumb";
 import { InvoiceHeader } from "./invoice/InvoiceHeader";
-import { Product } from "./invoice/ProductCatalog";
 import { InvoiceNotes } from "./invoice/InvoiceNotes";
 import HeaderProduct from "./invoice/HeaderProduct";
 import InvoiceFooter from "./invoice/InvoiceFooter";
 import { IconPlus } from "@tabler/icons-react";
+import { products } from '@/data/products';
+import { CartItem } from '@/types/product';
+import { Product } from "./invoice/ProductCatalog";
 
+const ITEMS_PER_PAGE = 5;
+const allCategories = Array.from(
+  new Set(products.flatMap(product => product.category))
+);
 
 export function CreateInvoice() {
   const navigate = useNavigate();
-  const {getDefaultTemplate } = useInvoiceStore();
+  const { getDefaultTemplate } = useInvoiceStore();
   const defaultTemplate = getDefaultTemplate();
-  const [selectedProducts, setSelectedProducts] = useState<
-    Array<{ product: any; quantity: number }>
-  >([]);
+  
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(ITEMS_PER_PAGE);
+  const [cart, setCart] = useState<CartItem[]>([]);
 
   const [invoiceData, setInvoiceData] = useState({
     name: "Spencer's Order Invoice",
@@ -27,31 +36,52 @@ export function CreateInvoice() {
     billTo: "",
     billToAddress: "",
     paymentNotes: "",
+    cart: cart,
+    paymentLinkActive: false,
     bankAccount: "",
     terms: "",
+    grandTotal: 0,
+    taxableAmount: 0,
+    vat: 0,
+    transactionFee: 10000,
+    totalAmount: 0,
+    netPayment: 0,
   });
 
-  // const handleQuantityChange = (productId: string, quantity: number) => {
-  //   setSelectedProducts((prev) =>
-  //     prev.map((item) =>
-  //       item.product.id === productId
-  //         ? { ...item, quantity: Math.max(0, quantity) }
-  //         : item
-  //     )
-  //   );
-  // };
+  // Product catalog methods
+  const handleAddToCart = (item: CartItem) => {
+    setCart(prevCart => [...prevCart, item]);
+  };
 
-  // const handleRemoveItem = (productId: string) => {
-  //   setSelectedProducts((prev) =>
-  //     prev.filter((item) => item.product.id !== productId)
-  //   );
-  // };
+  const handleUpdateQuantity = (
+    productId: string,
+    variantSize: string | undefined,
+    variantFlavor: string | undefined,
+    newQuantity: number
+  ) => {
+    setCart(prevCart =>
+      prevCart.map(item =>
+        item.product.id === productId &&
+        item.variantSize === variantSize &&
+        item.variantFlavor === variantFlavor
+          ? { ...item, quantity: newQuantity }
+          : item
+      )
+    );
+  };
 
-  // const addProductToInvoice = (product: any) => {
-  //   if (!selectedProducts.some((item) => item.product.id === product.id)) {
-  //     setSelectedProducts([...selectedProducts, { product, quantity: 1 }]);
-  //   }
-  // };
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategories.length === 0 || 
+      product.category.some(cat => selectedCategories.includes(cat));
+    return matchesSearch && matchesCategory;
+  });
+
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   if (!defaultTemplate) {
     return <div>No default template found</div>;
@@ -81,20 +111,41 @@ export function CreateInvoice() {
                 setInvoiceData({ ...invoiceData, dueDate: value })
               }
             />
-            <Product />
+            <Product 
+              catalog={{ 
+                  searchQuery:searchQuery,
+                  selectedCategories:selectedCategories,
+                  currentPage:currentPage,
+                  itemsPerPage:itemsPerPage,
+                  cart:cart,
+                  paginatedProducts:paginatedProducts,
+                  totalPages:totalPages,
+                  allCategories:allCategories,
+                  onSearchChange:setSearchQuery,
+                  onCategoryChange:setSelectedCategories,
+                  onPageChange:setCurrentPage,
+                  onItemsPerPageChange:setItemsPerPage,
+                  onAddToCart:handleAddToCart,
+                  onUpdateQuantity:handleUpdateQuantity
+               }}
+               invoice={{ 
+                  onGrandTotalChange: (value) =>
+                setInvoiceData({ ...invoiceData, grandTotal: value })
+              ,
+              }}
+            />
             <InvoiceFooter
-              paymentNotes={invoiceData.paymentNotes}
               bankAccount={invoiceData.bankAccount}
               terms={invoiceData.terms}
-              onPaymentNotesChange={(value) =>
-                setInvoiceData({ ...invoiceData, paymentNotes: value })
-              }
               onBankAccountChange={(value) =>
                 setInvoiceData({ ...invoiceData, bankAccount: value })
               }
               onTermsChange={(value) =>
                 setInvoiceData({ ...invoiceData, terms: value })
               }
+              onAmountPaymentChange={(value) =>
+                setInvoiceData({ ...invoiceData, netPayment: value })}
+              grandTotal={invoiceData.grandTotal}
             />
             <InvoiceNotes />
             <div className="flex justify-between">
@@ -114,3 +165,4 @@ export function CreateInvoice() {
     </div>
   );
 }
+

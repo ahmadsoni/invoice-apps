@@ -10,12 +10,15 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Plus, Minus, Trash2 } from 'lucide-react';
 import { CartItem } from "@/types/product";
+import { formatRupiah } from "@/lib/formater";
+import { useEffect } from "react";
 
 type InvoiceTableProps = {
   items: CartItem[];
   onQuantityChange: (productId: string, variantSize: string | undefined, variantFlavor: string | undefined, newQuantity: number) => void;
   onRemoveItem: (productId: string, variantSize: string | undefined, variantFlavor: string | undefined) => void;
   onShowCatalog: () => void;
+  onGrandTotalChange: (grandTotal: number) => void;
 };
 
 
@@ -24,12 +27,14 @@ export function InvoiceTable({
   onQuantityChange,
   onRemoveItem,
   onShowCatalog,
+  onGrandTotalChange
 }: InvoiceTableProps) {
   const calculateSubtotal = () =>
     items.reduce((sum, item) => sum + item.selectedVariant.price * item.quantity, 0);
-  const subtotal = calculateSubtotal();
-  const tax = subtotal * 0.11;
-  const total = subtotal + tax;
+  const total = calculateSubtotal();
+  useEffect(()=> {
+    onGrandTotalChange(total)
+  }, [calculateSubtotal])
 
   return (
     <Card className="p-6">
@@ -63,7 +68,7 @@ export function InvoiceTable({
                     <div>
                       <div className="font-medium">{item.product.name}</div>
                       <div className="text-sm text-muted-foreground">
-                        Rp {item.selectedVariant.price.toLocaleString()}
+                        Rp {formatRupiah(item.selectedVariant.price)}
                       </div>
                       {item.selectedVariant.size && (
                         <div className="text-sm text-muted-foreground">
@@ -102,7 +107,7 @@ export function InvoiceTable({
                   </div>
                 </TableCell>
                 <TableCell className="text-right font-medium">
-                  Rp {(item.selectedVariant.price * item.quantity).toLocaleString()}
+                  Rp {formatRupiah(item.selectedVariant.price * item.quantity)}
                 </TableCell>
                 <TableCell>
                   <Button
@@ -121,17 +126,9 @@ export function InvoiceTable({
       </div>
 
       <div className="mt-4 space-y-2">
-        <div className="flex justify-between text-sm">
-          <span className="font-medium">Subtotal</span>
-          <span>Rp {subtotal.toLocaleString()}</span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span className="font-medium">Tax (11%)</span>
-          <span>Rp {tax.toLocaleString()}</span>
-        </div>
         <div className="flex justify-between text-base font-bold pt-2 border-t">
           <span>Total</span>
-          <span>Rp {total.toLocaleString()}</span>
+          <span>Rp {formatRupiah(total)}</span>
         </div>
       </div>
     </Card>

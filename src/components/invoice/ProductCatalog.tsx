@@ -5,9 +5,9 @@ import { CartItem } from "@/types/product"
 import { products } from "@/data/products";
 import { Card } from "../ui/card";
 import { useState } from "react";
+import { ProductProps } from '../../types/product'
 
-
-export function Product() {
+export function Product({catalog, invoice}: ProductProps) {
   const [cart, setCart] = useState<CartItem[]>([])
   const [activeTab, setActiveTab] = useState<string>('catalog')
 
@@ -81,11 +81,23 @@ export function Product() {
           onQuantityChange={handleUpdateQuantity}
           onRemoveItem={handleRemoveItem}
           onShowCatalog={() => setActiveTab('catalog')}
+          onGrandTotalChange={invoice.onGrandTotalChange}
         />
       </TabsContent>
       <TabsContent value="catalog">
         <ProductCatalog 
+          searchQuery={catalog.searchQuery}
+          selectedCategories={catalog.selectedCategories}
+          currentPage={catalog.currentPage}
+          itemsPerPage={catalog.itemsPerPage}
           cart={cart}
+          paginatedProducts={catalog.paginatedProducts}
+          totalPages={catalog.totalPages}
+          allCategories={catalog.allCategories}
+          onSearchChange={catalog.onSearchChange}
+          onCategoryChange={catalog.onCategoryChange}
+          onPageChange={catalog.onPageChange}
+          onItemsPerPageChange={catalog.onItemsPerPageChange}
           onAddToCart={handleAddToCart}
           onUpdateQuantity={handleUpdateQuantity}
         />

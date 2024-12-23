@@ -168,8 +168,8 @@ export function ProductCard({ product, cartItem, onAddToCart, onUpdateQuantity, 
           <p className="text-sm text-gray-500">Subtotal:</p>
           <p className="text-xl font-bold text-blue-600">{formatPrice(getSubtotal())}</p>
         </div>
-        <div className='flex flex-row gap-2 items-center justify-end'>
-          <Button variant={'destructive'} className='hover:cursor-default'>
+        <div className='flex flex-row gap-2 items-center'>
+          <Button variant={'destructive'} className='hover:cursor-default h-10'>
               <IconDiscountFilled className='text-white'/>
           </Button>
           <QuantityControls

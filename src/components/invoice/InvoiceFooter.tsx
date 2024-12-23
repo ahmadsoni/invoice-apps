@@ -1,18 +1,20 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Info, Trash2 } from "lucide-react";
 import { Card } from "../ui/card";
 import { IconCirclePlusFilled, IconDiscountFilled, IconReceiptTax } from "@tabler/icons-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { formatRupiah } from "@/lib/formater";
 
 interface InvoiceFooterProps {
-  paymentNotes: string;
   bankAccount: string;
   terms: string;
-  onPaymentNotesChange: (value: string) => void;
   onBankAccountChange: (value: string) => void;
   onTermsChange: (value: string) => void;
+  grandTotal: number;
+  onAmountPaymentChange: (value: number) => void;
 }
 
 interface DynamicField {
@@ -22,27 +24,23 @@ interface DynamicField {
 }
 
 export default function InvoiceFooter({
-  paymentNotes,
   bankAccount,
   terms,
-  onPaymentNotesChange,
   onBankAccountChange,
   onTermsChange,
+  grandTotal,
+  onAmountPaymentChange,
 }: InvoiceFooterProps) {
-  const [grandTotal, _] = useState(555000);
   const [promoFields, setPromoFields] = useState<DynamicField[]>([]);
   const [vatFields, setVatFields] = useState<DynamicField[]>([]);
-
-  const formatRupiah = (value: number): string => {
-    const data = new Intl.NumberFormat("id-ID").format(Math.abs(value));
-    return data === "NaN" ? "0" : data;
-  };
+  const [error, setError] = useState<string | null>(null);
 
   const handleAddPromoField = () => {
     setPromoFields((prevFields) => [
       ...prevFields,
       { id: Date.now(), type: "promo", value: 0 },
     ]);
+    setError(null);
   };
 
   const handleAddVatField = () => {
@@ -50,22 +48,36 @@ export default function InvoiceFooter({
       ...prevFields,
       { id: Date.now(), type: "vat", value: 0 },
     ]);
+    setError(null);
   };
 
   const handleFieldChange = (id: number, value: string, type: "promo" | "vat") => {
     const numericValue = parseFloat(value.replace(/\D/g, "")) || 0;
+    
     if (type === "promo") {
-      setPromoFields((prevFields) =>
-        prevFields.map((field) =>
-          field.id === id ? { ...field, value: numericValue } : field
-        )
+      const newPromoFields = promoFields.map((field) =>
+        field.id === id ? { ...field, value: numericValue } : field
       );
+      const totalDiscount = newPromoFields.reduce((sum, field) => sum + field.value, 0);
+      if (totalDiscount > grandTotal) {
+        setError("Total discount cannot exceed grand total amount");
+        return;
+      }
+      
+      setPromoFields(newPromoFields);
+      setError(null);
     } else if (type === "vat") {
+      if (numericValue > 100) {
+        setError("VAT percentage cannot exceed 100%");
+        return;
+      }
+      
       setVatFields((prevFields) =>
         prevFields.map((field) =>
           field.id === id ? { ...field, value: numericValue } : field
         )
       );
+      setError(null);
     }
   };
 
@@ -79,27 +91,45 @@ export default function InvoiceFooter({
         prevFields.filter((field) => field.id !== id)
       );
     }
+    setError(null);
   };
 
   const calculateNetPayment = () => {
-    let taxableAmount = grandTotal;
-
-    promoFields.forEach((field) => {
-      taxableAmount -= field.value;
-    });
-
-    vatFields.forEach((field) => {
-      taxableAmount += (taxableAmount * field.value) / 100;
-    });
-
-    return taxableAmount;
+    const totalDiscount = promoFields.reduce((sum, field) => sum + field.value, 0);
+    let afterDiscount = grandTotal - totalDiscount;
+    const totalVatAmount = vatFields.reduce((sum, field) => {
+      const vatAmount = (afterDiscount * field.value) / 100;
+      return sum + vatAmount;
+    }, 0);
+    return afterDiscount - totalVatAmount;
   };
 
+  const calculateTotalDiscount = () => {
+    return promoFields.reduce((sum, field) => sum + field.value, 0);
+  };
+
+  const calculateTotalVat = () => {
+    const afterDiscount = grandTotal - calculateTotalDiscount();
+    return vatFields.reduce((sum, field) => {
+      const vatAmount = (afterDiscount * field.value) / 100;
+      return sum + vatAmount;
+    }, 0);
+  };
   const netPayment = calculateNetPayment();
+  useEffect(()=> {
+    onAmountPaymentChange(netPayment)
+  }, [netPayment])
+  const totalDiscount = calculateTotalDiscount();
+  const totalVat = calculateTotalVat();
   const isNegative = netPayment < 0;
 
   return (
     <Card className="p-6 space-y-6">
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
       <div className="flex flex-row items-center gap-2">
         <h3 className="text-lg font-semibold">Invoice Footer</h3>
         <Info className="h-5 w-5 text-muted-foreground" />
@@ -174,7 +204,7 @@ export default function InvoiceFooter({
                       className="pl-12 text-right w-40 text-red-500"
                     />
                     <Button size="icon" className="hover:cursor-default" variant="destructive">
-                        <IconDiscountFilled className="h-5 w-5" />
+                      <IconDiscountFilled className="h-5 w-5" />
                     </Button>
                     <Button
                       size="icon"
@@ -200,6 +230,21 @@ export default function InvoiceFooter({
               </div>
             </div>
 
+            {/* Total Discount */}
+            {promoFields.length > 0 && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={"outline"}
+                  className="w-32 text-start flex justify-start mt-1 hover:cursor-default"
+                >
+                  Total Discount
+                </Button>
+                <span className="flex items-center gap-2 text-red-500">
+                  -Rp. {formatRupiah(totalDiscount)}
+                </span>
+              </div>
+            )}
+
             {/* VAT Fields */}
             <div className="space-y-4 mt-8">
               {vatFields.map((field) => (
@@ -222,7 +267,7 @@ export default function InvoiceFooter({
                       className="pl-8 text-right w-40 text-destructive"
                     />
                     <Button size="icon" className="hover:cursor-default" variant="destructive">
-                        <IconReceiptTax className="h-5 w-5" />
+                      <IconReceiptTax className="h-5 w-5" />
                     </Button>
                     <Button
                       size="icon"
@@ -248,6 +293,21 @@ export default function InvoiceFooter({
               </div>
             </div>
 
+            {/* Total VAT Amount */}
+            {vatFields.length > 0 && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={"outline"}
+                  className="w-32 text-start flex justify-start mt-1 hover:cursor-default"
+                >
+                  Total VAT
+                </Button>
+                <span className="flex items-center gap-2 text-red-500">
+                  -Rp. {formatRupiah(totalVat)}
+                </span>
+              </div>
+            )}
+
             <hr className=""/>
             <div className="flex items-center pt-4 gap-2">
               <Button
@@ -261,7 +321,7 @@ export default function InvoiceFooter({
                   isNegative ? "text-red-500" : "text-green-500"
                 }`}
               >
-                {isNegative ? '-' : ''} Rp. {formatRupiah(netPayment)}
+                {isNegative ? "-" : ""} Rp. {formatRupiah(Math.abs(netPayment))}
               </span>
             </div>
           </div>
