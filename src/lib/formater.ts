@@ -1,4 +1,17 @@
-  export const formatRupiah = (value: number): string => {
-    const data = new Intl.NumberFormat("id-ID").format(Math.abs(value));
-    return data === "NaN" ? "0" : data;
-  };
+ export const formatToRupiah = (amount: number): string => {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(amount);
+};
+
+  export const formatCurrency = (amount: number): string => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(amount);
+};

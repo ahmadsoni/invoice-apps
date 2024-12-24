@@ -6,7 +6,7 @@ import { Info, Trash2 } from "lucide-react";
 import { Card } from "../ui/card";
 import { IconCirclePlusFilled, IconDiscountFilled, IconReceiptTax } from "@tabler/icons-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { formatRupiah } from "@/lib/formater";
+import { formatToRupiah } from "@/lib/formater";
 
 interface InvoiceFooterProps {
   bankAccount: string;
@@ -15,6 +15,10 @@ interface InvoiceFooterProps {
   onTermsChange: (value: string) => void;
   grandTotal: number;
   onAmountPaymentChange: (value: number) => void;
+  onVatChange: (value: number) => void;
+  onTaxableAmountChange: (value: number) => void;
+  onNetPaymentChange: (value: number) => void;
+  onTotalValueVatChange: (value: number) => void;
 }
 
 interface DynamicField {
@@ -30,6 +34,10 @@ export default function InvoiceFooter({
   onTermsChange,
   grandTotal,
   onAmountPaymentChange,
+  onVatChange,
+  onTaxableAmountChange,
+  onNetPaymentChange,
+  onTotalValueVatChange
 }: InvoiceFooterProps) {
   const [promoFields, setPromoFields] = useState<DynamicField[]>([]);
   const [vatFields, setVatFields] = useState<DynamicField[]>([]);
@@ -115,13 +123,27 @@ export default function InvoiceFooter({
       return sum + vatAmount;
     }, 0);
   };
+
+  const calculateAverageVat = () => {
+    if (vatFields.length === 0) return 0;
+    const totalVatPercentage = vatFields.reduce((sum, field) => sum + field.value, 0);
+    return totalVatPercentage / vatFields.length;
+  };
+
+
   const netPayment = calculateNetPayment();
-  useEffect(()=> {
-    onAmountPaymentChange(netPayment)
-  }, [netPayment])
+  const totalVAT = calculateAverageVat();
   const totalDiscount = calculateTotalDiscount();
-  const totalVat = calculateTotalVat();
+  const totalValueVat = calculateTotalVat();
   const isNegative = netPayment < 0;
+
+  useEffect(()=> {
+    onAmountPaymentChange(netPayment);
+    onNetPaymentChange(netPayment);
+    onVatChange(totalVAT);
+    onTaxableAmountChange(grandTotal);
+    onTotalValueVatChange(totalValueVat);
+  }, [netPayment, totalVAT])
 
   return (
     <Card className="p-6 space-y-6">
@@ -178,7 +200,7 @@ export default function InvoiceFooter({
                 Grand Total
               </Button>
               <span className="flex items-center gap-2">
-                Rp. {formatRupiah(grandTotal)}
+                Rp. {formatToRupiah(grandTotal)}
               </span>
             </div>
 
@@ -240,7 +262,7 @@ export default function InvoiceFooter({
                   Total Discount
                 </Button>
                 <span className="flex items-center gap-2 text-red-500">
-                  -Rp. {formatRupiah(totalDiscount)}
+                  -Rp. {formatToRupiah(totalDiscount)}
                 </span>
               </div>
             )}
@@ -303,7 +325,7 @@ export default function InvoiceFooter({
                   Total VAT
                 </Button>
                 <span className="flex items-center gap-2 text-red-500">
-                  -Rp. {formatRupiah(totalVat)}
+                  -Rp. {formatToRupiah(totalValueVat)}
                 </span>
               </div>
             )}
@@ -321,7 +343,7 @@ export default function InvoiceFooter({
                   isNegative ? "text-red-500" : "text-green-500"
                 }`}
               >
-                {isNegative ? "-" : ""} Rp. {formatRupiah(Math.abs(netPayment))}
+                {isNegative ? "-" : ""} Rp. {formatToRupiah(Math.abs(netPayment))}
               </span>
             </div>
           </div>

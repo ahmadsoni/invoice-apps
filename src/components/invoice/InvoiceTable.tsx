@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Plus, Minus, Trash2 } from 'lucide-react';
 import { CartItem } from "@/types/product";
-import { formatRupiah } from "@/lib/formater";
+import { formatToRupiah } from "@/lib/formater";
 
 type InvoiceTableProps = {
   items: CartItem[];
@@ -60,7 +60,7 @@ export function InvoiceTable({
                     <div>
                       <div className="font-medium">{item.product.name}</div>
                       <div className="text-sm text-muted-foreground">
-                        Rp {formatRupiah(item.selectedVariant.price)}
+                        Rp {formatToRupiah(item.selectedVariant.price)}
                       </div>
                       {item.selectedVariant.size && (
                         <div className="text-sm text-muted-foreground">
@@ -99,7 +99,7 @@ export function InvoiceTable({
                   </div>
                 </TableCell>
                 <TableCell className="text-right font-medium">
-                  Rp {formatRupiah(item.selectedVariant.price * item.quantity)}
+                  Rp {formatToRupiah(item.selectedVariant.price * item.quantity)}
                 </TableCell>
                 <TableCell>
                   <Button
@@ -120,7 +120,7 @@ export function InvoiceTable({
       <div className="mt-4 space-y-2">
         <div className="flex justify-between text-base font-bold pt-2 border-t">
           <span>Total</span>
-          <span>Rp {formatRupiah(grandTotal)}</span>
+          <span>Rp {formatToRupiah(grandTotal)}</span>
         </div>
       </div>
     </Card>

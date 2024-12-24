@@ -43,9 +43,10 @@ export function CreateInvoice() {
     grandTotal: 0,
     taxableAmount: 0,
     vat: 0,
+    totalValueVat: 0,
+    netPayment: 0,
     transactionFee: 10000,
     totalAmount: 0,
-    netPayment: 0,
   });
 
   // Product catalog methods
@@ -147,8 +148,24 @@ export function CreateInvoice() {
               onAmountPaymentChange={(value) =>
                 setInvoiceData({ ...invoiceData, netPayment: value })}
               grandTotal={invoiceData.grandTotal}
+              onVatChange={(value) => 
+                setInvoiceData({...invoiceData, vat: value})}
+              onNetPaymentChange={(value) => 
+                setInvoiceData({...invoiceData, netPayment: value})}
+              onTaxableAmountChange={(value) => 
+                setInvoiceData({...invoiceData, taxableAmount: value})}
+              onTotalValueVatChange={(value) => 
+                setInvoiceData({...invoiceData, totalValueVat: value})}
             />
-            <InvoiceNotes />
+            <InvoiceNotes 
+              onPaymentLinkActiveChange={(value) =>
+                setInvoiceData({...invoiceData, paymentLinkActive: value})}
+              onTotalAmountChange={(value) => 
+                setInvoiceData({...invoiceData, totalAmount: value})}
+              paymentLinkActive={invoiceData.paymentLinkActive}
+              netPayment={invoiceData.netPayment}
+              transactionFee={invoiceData.transactionFee}
+            />
             <div className="flex justify-between">
               <button className="text-destructive bg-transparent" onClick={() => navigate("/")}>
                 Cancel

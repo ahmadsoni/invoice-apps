@@ -2,21 +2,26 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Info } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { useState } from "react";
+import { formatToRupiah } from "@/lib/formater";
+
 
 
 function TransactionDetail({
   title,
   description,
-  additionalInfo,
+  operator,
+  additionalInfoNumberOne,
+  additionalInfoNumberTwo,
   amount,
   amountDescription,
   isHighlighted = false,
 }: {
   title: string;
   description: string;
-  additionalInfo: string;
-  amount: string;
+  operator: string;
+  additionalInfoNumberOne: number;
+  additionalInfoNumberTwo: number;
+  amount: number;
   amountDescription: string;
   isHighlighted?: boolean;
 }) {
@@ -29,7 +34,7 @@ function TransactionDetail({
         </div>
         <p className="text-sm text-muted-foreground">{description}</p>
         <p className="text-xs text-slate-400 font-semibold mt-1">
-          {additionalInfo}
+          {additionalInfoNumberOne} {operator} {additionalInfoNumberTwo}
         </p>
       </div>
       <div className="flex items-end flex-col">
@@ -39,16 +44,22 @@ function TransactionDetail({
             isHighlighted ? "text-blue-600" : ""
           }`}
         >
-          {amount}
+          Rp. {formatToRupiah(amount)}
         </p>
       </div>
     </div>
   );
 }
-
-export function InvoiceNotes() {
-  const [paymentLink, setPaymentLink] = useState(true);
-
+interface InvoiceNotesProps {
+  onTotalAmountChange: (value: number) => void;
+  onPaymentLinkActiveChange: (value: boolean) => void;
+  paymentLinkActive: boolean;
+  netPayment: number;
+  transactionFee: number;
+}
+export function InvoiceNotes(props: InvoiceNotesProps) {
+  const customerCharge = props.netPayment === 0 ? 0 : props.netPayment- props.transactionFee;
+  const amountTransfer = customerCharge === 0 ? 0 : customerCharge + props.transactionFee;
   return (
     <Card className="p-6">
       <div className="space-y-6">
@@ -58,11 +69,11 @@ export function InvoiceNotes() {
             <h3 className="text-lg font-semibold">Payment Link</h3>
             <Switch
               id="copy-link-mode"
-              checked={paymentLink}
-              onClick={() => setPaymentLink(!paymentLink)}
+              checked={props.paymentLinkActive}
+              onClick={() => props.onPaymentLinkActiveChange(!props.paymentLinkActive)}
             />
           </div>
-          {paymentLink && (
+          {props.paymentLinkActive && (
             <div className="flex gap-4">
               <Input
                 value="The payment link will appear after you create the invoice document"
@@ -78,16 +89,20 @@ export function InvoiceNotes() {
           <TransactionDetail
             title="Transaction Fee: Charge Customer"
             description="The full amount the customer will pay, including the transaction fee"
-            additionalInfo="Rp 493.950 + Rp 10.000"
-            amount="Rp 503.950"
+            additionalInfoNumberOne={props.netPayment}
+            additionalInfoNumberTwo={props.transactionFee}
+            operator="-"
+            amount={customerCharge}
             amountDescription="Amount Transferred to You"
             isHighlighted
           />
           <TransactionDetail
             title="Settlement: Auto Transfer to Bank"
             description="This is your net earnings after the auto transfer fee is deducted"
-            additionalInfo="Rp 503.950 - Rp 10.000"
-            amount="Rp 493.950"
+            additionalInfoNumberOne={customerCharge}
+            additionalInfoNumberTwo={props.transactionFee}
+            operator="+"
+            amount={amountTransfer}
             amountDescription="Amount Transferred to You"
           />
         </div>
