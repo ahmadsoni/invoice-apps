@@ -8,25 +8,26 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus, Minus, Trash2 } from 'lucide-react';
-import { CartItem } from "@/types/product";
+import { Plus, Minus, Trash2 } from "lucide-react";
 import { formatToRupiah } from "@/lib/formater";
+import { Product } from "@/types/product";
 
 type InvoiceTableProps = {
-  items: CartItem[];
-  onQuantityChange: (productId: string, variantSize: string | undefined, variantFlavor: string | undefined, newQuantity: number) => void;
-  onRemoveItem: (productId: string, variantSize: string | undefined, variantFlavor: string | undefined) => void;
+  items: Array<{ productId: string; quantity: number }>;
+  onQuantityChange: (productId: string, newQuantity: number) => void;
+  onRemoveItem: (productId: string) => void;
   onShowCatalog: () => void;
   grandTotal: number;
+  products: Product[];
 };
-
 
 export function InvoiceTable({
   items,
   onQuantityChange,
   onRemoveItem,
   onShowCatalog,
-  grandTotal
+  grandTotal,
+  products,
 }: InvoiceTableProps) {
   return (
     <Card className="p-6">
@@ -36,7 +37,6 @@ export function InvoiceTable({
           Catalog
         </Button>
       </div>
-      
       <div className="rounded-lg border">
         <Table>
           <TableHeader>
@@ -48,71 +48,71 @@ export function InvoiceTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {items.map((item) => (
-              <TableRow key={`${item.product.id}-${item.selectedVariant.size}-${item.selectedVariant.flavor}`}>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={item.product.image}
-                      alt={item.product.name}
-                      className="w-12 h-12 object-cover rounded"
-                    />
-                    <div>
-                      <div className="font-medium">{item.product.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        Rp {formatToRupiah(item.selectedVariant.price)}
+            {items.map((item) => {
+              const product = products.find((p) => p.id === item.productId);
+              if (!product) return null;
+
+              const price = product.basePrice;
+              const subTotal = price * item.quantity;
+
+              return (
+                <TableRow key={item.productId}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="w-12 h-12 object-cover rounded"
+                      />
+                      <div>
+                        <div className="font-medium">{product.name}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {formatToRupiah(price)}
+                        </div>
                       </div>
-                      {item.selectedVariant.size && (
-                        <div className="text-sm text-muted-foreground">
-                          Size: {item.selectedVariant.size}
-                        </div>
-                      )}
-                      {item.selectedVariant.flavor && (
-                        <div className="text-sm text-muted-foreground">
-                          Flavor: {item.selectedVariant.flavor}
-                        </div>
-                      )}
                     </div>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() =>
+                          onQuantityChange(item.productId, Math.max(0, item.quantity - 1))
+                        }
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <span className="w-8 text-center">{item.quantity}</span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() =>
+                          onQuantityChange(item.productId, item.quantity + 1)
+                        }
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right font-medium">
+                    {formatToRupiah(subTotal)}
+                  </TableCell>
+                  <TableCell>
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="icon"
                       className="h-8 w-8"
-                      onClick={() =>
-                        onQuantityChange(item.product.id, item.selectedVariant.size, item.selectedVariant.flavor, Math.max(0, item.quantity - 1))
-                      }
+                      onClick={() => onRemoveItem(item.productId)}
                     >
-                      <Minus className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
-                    <span className="w-8 text-center">{item.quantity}</span>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => onQuantityChange(item.product.id, item.selectedVariant.size, item.selectedVariant.flavor, item.quantity + 1)}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-                <TableCell className="text-right font-medium">
-                  Rp {formatToRupiah(item.selectedVariant.price * item.quantity)}
-                </TableCell>
-                <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => onRemoveItem(item.product.id, item.selectedVariant.size, item.selectedVariant.flavor)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
@@ -120,10 +120,9 @@ export function InvoiceTable({
       <div className="mt-4 space-y-2">
         <div className="flex justify-between text-base font-bold pt-2 border-t">
           <span>Total</span>
-          <span>Rp {formatToRupiah(grandTotal)}</span>
+          <span>{formatToRupiah(grandTotal)}</span>
         </div>
       </div>
     </Card>
   );
 }
-

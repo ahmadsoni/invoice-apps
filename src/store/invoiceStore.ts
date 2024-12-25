@@ -1,123 +1,50 @@
-import { create } from 'zustand';
+import { InvoiceData } from '@/types/invoice';
+import create from 'zustand';
 
-export interface Product {
-  id: string;
-  name: string;
-  price: number;
-  image: string;
-  description: string;
-  category: string[];
+interface InvoiceState {
+  invoiceData: InvoiceData;
+  setInvoiceData: (newData: Partial<InvoiceData>) => void;
+  getInvoiceData: () => InvoiceData;
 }
 
-export interface InvoiceTemplate {
-  id: string;
-  name: string;
-  isDefault: boolean;
-  header: {
-    companyName: string;
-    address: string;
-    phone: string;
-  };
-  footer: {
-    paymentNotes: string;
-    bankAccount: string;
-    terms: string;
-  };
-}
+const formatDate = (date: Date): string => date.toISOString().split("T")[0];
 
-export interface InvoiceDocument {
-  id: string;
-  name: string;
-  date: string;
-  dueDate: string;
-  invoiceNumber: string;
-  billTo: string;
-  billToAddress: string;
-  items: Array<{
-    product: Product;
-    quantity: number;
-    total: number;
-  }>;
-  subtotal: number;
-  tax: number;
-  total: number;
-}
-
-interface InvoiceStore {
-  products: Product[];
-  templates: InvoiceTemplate[];
-  documents: InvoiceDocument[];
-  getDefaultTemplate: () => InvoiceTemplate | undefined;
-  addDocument: (document: InvoiceDocument) => void;
-}
-
-export const useInvoiceStore = create<InvoiceStore>((set, get) => ({
-  products: [
-    {
-      id: '1',
-      name: 'Almond Milk',
-      price: 65000,
-      image: 'https://images.unsplash.com/photo-1600788886242-5c96aabe3757',
-      description: 'Fresh Almond Milk with no Sugar',
-      category: ['Minuman'],
+const useInvoiceStore = create<InvoiceState>((set, get) => ({
+  invoiceData: {
+    id: '1',
+    company: {
+      name: "Spencer's Indonesia (Kemitraan)",
+      address: 'UMC Land Building, Surabaya Jawa Timur, Indonesia. (123455)',
+      phone: '+628212345678',
     },
-    {
-      id: '2',
-      name: 'Chia Jam',
-      price: 68000,
-      image: 'https://images.unsplash.com/photo-1590503803905-25d0a3704b12',
-      description: 'Delicious Taste',
-      category: ['Makanan', 'Selai'],
+    invoice: {
+      number: "0002",
+      date: formatDate(new Date()),
+      dueDate: formatDate(new Date(new Date().setDate(new Date().getDate() + 1))),
+      terms: "Net 30",
     },
-    {
-      id: '3',
-      name: 'Signature Christmas Wishes',
-      price: 598000,
-      image: 'https://images.unsplash.com/photo-1607344645866-009c320b63e0',
-      description: 'Special Gift Set',
-      category: ['Makanan', 'Paket'],
+    billing: {
+      billTo: "Customer",
+      billToAddress: "123 Street Name, City",
+      paymentNotes: "Payment due within 30 days",
     },
-    {
-      id: '4',
-      name: 'Christmas Joy Hampers',
-      price: 598000,
-      image: 'https://images.unsplash.com/photo-1607344645866-009c320b63e0',
-      description: 'Holiday Gift Set',
-      category: ['Makanan', 'Paket'],
+    cart: [], 
+    payment: {
+      paymentLinkActive: false,
+      bankAccount: "123-456-789",
+      transactionFee: 10000,
+      grandTotal: 0,
+      taxableAmount: 0,
+      vat: 0,
+      totalValueVat: 0,
+      netPayment: 0,
+      totalAmount: 0,
     },
-    {
-      id: '5',
-      name: 'All Varian Healthy DESSERT CUP',
-      price: 360000,
-      image: 'https://images.unsplash.com/photo-1587314168485-3236d6710814',
-      description: 'Healthy Dessert Variety Pack',
-      category: ['Makanan', 'Dessert'],
-    },
-  ],
-  templates: [
-    {
-      id: '1',
-      name: 'Default Template',
-      isDefault: true,
-      header: {
-        companyName: "Spencer's Indonesia (Kemitraan)",
-        address: 'UMC Land Building, Surabaya Jawa Timur, Indonesia. (123455)',
-        phone: '+628212345678',
-      },
-      footer: {
-        paymentNotes: 'Notes as "Payment Address"',
-        bankAccount: 'Add Notes "Bank XYZ, Account: 1234"',
-        terms: 'Terms & Conditions',
-      },
-    },
-  ],
-  documents: [],
-  getDefaultTemplate: () => {
-    return get().templates.find((template) => template.isDefault);
   },
-  addDocument: (document) => {
-    set((state) => ({
-      documents: [...state.documents, document],
-    }));
-  },
+  setInvoiceData: (newData) => set((state) => ({
+    invoiceData: { ...state.invoiceData, ...newData },
+  })),
+  getInvoiceData: () => get().invoiceData,
 }));
+
+export default useInvoiceStore;

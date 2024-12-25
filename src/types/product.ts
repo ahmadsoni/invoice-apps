@@ -1,7 +1,8 @@
 export interface ProductVariant {
-  size?: 'Standard' | 'Large'
-  flavor?: 'Original' | 'Choco' | 'Peach' | 'Blueberry' | 'Strawberry'
-  price: number
+  size?: string;
+  flavor?: string;
+  price?: number
+  image?: string;
 }
 
 export interface Product {
@@ -11,29 +12,25 @@ export interface Product {
   image: string
   category: string[]
   description: string
-  variants: ProductVariant[]
+  variants?: ProductVariant[]
   thumbnails?: string[]
 }
 
 export interface CartItem {
-  product: Product
-  selectedVariant: ProductVariant
+  productId: string;
+  basePrice: number;
+  selectedVariant?: ProductVariant | null
   quantity: number;
-  variantSize?: string;
-  variantFlavor?: string;
 }
 
-export interface InvoiceTableProps {
-  onGrandTotalChange: (grandTotal: number) => void;
-  grandTotal: number;
-}
+
 
 export interface ProductCatalogProps {
   searchQuery: string
   selectedCategories: string[]
   currentPage: number
   itemsPerPage: number
-  cart: CartItem[]
+  cart: CartItem[];
   paginatedProducts: any[]
   totalPages: number
   allCategories: string[]
@@ -42,10 +39,9 @@ export interface ProductCatalogProps {
   onPageChange: (page: number) => void
   onItemsPerPageChange: (itemsPerPage: number) => void
   onAddToCart: (item: CartItem) => void
-  onUpdateQuantity: (productId: string, variantSize: string | undefined, variantFlavor: string | undefined, newQuantity: number) => void;
+  onUpdateQuantity: (productId: string, newQuantity: number) => void;
 }
 
 export interface ProductProps {
   catalog: ProductCatalogProps;
-  invoice: InvoiceTableProps;
 }

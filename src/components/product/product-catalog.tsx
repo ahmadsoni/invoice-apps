@@ -20,7 +20,6 @@ import { ProductCard } from './product-card'
 import { Pagination } from '../pagination/pagination'
 import { ProductCatalogProps } from '../../types/product'
 
-
 export function ProductCatalog({
   searchQuery,
   selectedCategories,
@@ -35,15 +34,15 @@ export function ProductCatalog({
   onPageChange,
   onItemsPerPageChange,
   onAddToCart,
-  onUpdateQuantity
+  onUpdateQuantity,
 }: ProductCatalogProps) {
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-lg font-semibold flex items-center gap-2">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
           Product Catalog
-          <Info className="h-5 w-5 text-muted-foreground" />
-        </h3>
+          <Info className="h-5 w-5 text-muted-foreground" aria-label="Product catalog information" />
+        </h2>
         <div className="flex gap-4">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -73,12 +72,13 @@ export function ProductCatalog({
             </DropdownMenuContent>
           </DropdownMenu>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" aria-hidden="true" />
             <Input
               placeholder="Search Product"
               className="pl-10 w-[200px]"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
+              aria-label="Search products"
             />
           </div>
         </div>
@@ -86,12 +86,12 @@ export function ProductCatalog({
 
       <div className="grid gap-6">
         {paginatedProducts.map(product => (
-          <ProductCard
+         <ProductCard
             key={product.id}
             product={product}
-            cart={cart}
-            onAddToCart={onAddToCart}
-            onUpdateQuantity={onUpdateQuantity}
+            cartItems={cart}
+            onAddToCart={() => onAddToCart(product.id)}
+            onUpdateQuantity={(productId: string, newQuantity: number) => onUpdateQuantity(productId, newQuantity)}
           />
         ))}
       </div>
@@ -129,3 +129,4 @@ export function ProductCatalog({
     </div>
   )
 }
+

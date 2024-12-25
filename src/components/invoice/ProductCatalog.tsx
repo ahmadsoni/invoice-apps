@@ -1,113 +1,134 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ProductCatalog } from "@/components/product/product-catalog"
-import { InvoiceTable } from "@/components/invoice/InvoiceTable"
-import { CartItem } from "@/types/product"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ProductCatalog } from "@/components/product/product-catalog";
+import { InvoiceTable } from "@/components/invoice/InvoiceTable";
+import { CartItem } from "@/types/product";
 import { products } from "@/data/products";
 import { Card } from "../ui/card";
-import { useEffect, useState } from "react";
-import { ProductProps } from '../../types/product'
+import { useEffect, useMemo, useState } from "react";
+import useInvoiceStore from "@/store/invoiceStore";
 
-export function Product({catalog, invoice}: ProductProps) {
-  const [cart, setCart] = useState<CartItem[]>([])
-  const [activeTab, setActiveTab] = useState<string>('catalog')
+const ITEMS_PER_PAGE = 5;
+const allCategories = Array.from(
+  new Set(products.flatMap(product => product.category))
+);
 
+export function Product() {
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [activeTab, setActiveTab] = useState<string>("catalog");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(ITEMS_PER_PAGE);
+  const { invoiceData, setInvoiceData } = useInvoiceStore((state) => ({
+    invoiceData: state.getInvoiceData(),
+    setInvoiceData: state.setInvoiceData,
+  }));
+  console.log("cart", cart);
   const handleAddToCart = (item: CartItem) => {
-    setCart(prev => {
-      const existingItem = prev.find(
-        i => i.product.id === item.product.id && 
-        i.selectedVariant.size === item.selectedVariant.size && 
-        i.selectedVariant.flavor === item.selectedVariant.flavor
-      )
-
-      if (existingItem) {
-        return prev.map(i => 
-          i === existingItem 
-            ? { ...i, quantity: i.quantity + item.quantity }
-            : i
-        )
-      }
-
-      return [...prev, item]
-    })
-  }
-
-  const handleUpdateQuantity = (productId: string, variantSize: string | undefined, variantFlavor: string | undefined, newQuantity: number) => {
-    setCart(prev => {
-      const existingItemIndex = prev.findIndex(
-        item => item.product.id === productId && 
-                item.selectedVariant.size === variantSize &&
-                item.selectedVariant.flavor === variantFlavor
-      )
-
+    setCart(prevCart => {
+      const existingItemIndex = prevCart.findIndex(cartItem => cartItem.productId === item.productId);
       if (existingItemIndex !== -1) {
-        if (newQuantity <= 0) {
-          return prev.filter((_, index) => index !== existingItemIndex)
-        } else {
-          return prev.map((item, index) => 
-            index === existingItemIndex ? { ...item, quantity: newQuantity } : item
-          )
-        }
-      } else if (newQuantity > 0) {
-        const product = products.find(p => p.id === productId)
+        const updatedCart = [...prevCart];
+        updatedCart[existingItemIndex].quantity += 1;
+        return updatedCart;
+      } else {
+        const product = products.find(p => p.id === item.productId);
         if (product) {
-          const variant = product.variants.find(v => v.size === variantSize && v.flavor === variantFlavor)
-          if (variant) {
-            return [...prev, { product, selectedVariant: variant, quantity: newQuantity }]
-          }
+          return [
+            ...prevCart,
+            { productId: item.productId, basePrice: product.basePrice, quantity: 1 }
+          ];
         }
+        return prevCart;
       }
-      return prev
-    })
-  }
+    });
+  };
 
-  const handleRemoveItem = (productId: string, variantSize: string | undefined, variantFlavor: string | undefined) => {
-    setCart(prev => prev.filter(item => 
-      item.product.id !== productId || 
-      item.selectedVariant.size !== variantSize ||
-      item.selectedVariant.flavor !== variantFlavor
-    ))
-  }
-   const calculateSubtotal = () =>
-      cart.reduce((sum, item) => sum + item.selectedVariant.price * item.quantity, 0);
-    const total = calculateSubtotal();
-    useEffect(()=> {
-      invoice.onGrandTotalChange(total)
-    }, [calculateSubtotal])
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategories.length === 0 || 
+      product.category.some(cat => selectedCategories.includes(cat));
+    return matchesSearch && matchesCategory;
+  });
+
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handleUpdateQuantity = (
+    productId: string,
+    newQuantity: number
+  ) => {
+    setCart(prevCart => {
+      const updatedCart = prevCart.map(item => 
+        item.productId === productId
+          ? { ...item, quantity: newQuantity }
+          : item
+      );
+      return updatedCart;
+    });
+  };
+
+  const handleRemoveItem = (productId: string) => {
+    setCart(prevCart => prevCart.filter(item => item.productId !== productId));
+  };
+
+  const total = useMemo(() => {
+    return cart.reduce((sum, { productId, quantity }) => {
+      const product = products.find(p => p.id === productId);
+      if (product) {
+        return sum + (product.basePrice * quantity);
+      }
+      return sum;
+    }, 0);
+  }, [cart]);
+  
+  useEffect(() => {
+    setInvoiceData({
+      payment: {
+        grandTotal: total,
+      }
+    });
+  }, [total, setInvoiceData]);
+
   return (
     <Card className="h-full">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="grid w-full grid-cols-2 ">
-        <TabsTrigger value="invoice">Invoice Table</TabsTrigger>
-        <TabsTrigger value="catalog">Catalog</TabsTrigger>
-      </TabsList>
-      <TabsContent value="invoice">
-        <InvoiceTable 
-          items={cart}
-          onQuantityChange={handleUpdateQuantity}
-          onRemoveItem={handleRemoveItem}
-          onShowCatalog={() => setActiveTab('catalog')}
-          grandTotal={invoice.grandTotal}
-        />
-      </TabsContent>
-      <TabsContent value="catalog">
-        <ProductCatalog 
-          searchQuery={catalog.searchQuery}
-          selectedCategories={catalog.selectedCategories}
-          currentPage={catalog.currentPage}
-          itemsPerPage={catalog.itemsPerPage}
-          cart={cart}
-          paginatedProducts={catalog.paginatedProducts}
-          totalPages={catalog.totalPages}
-          allCategories={catalog.allCategories}
-          onSearchChange={catalog.onSearchChange}
-          onCategoryChange={catalog.onCategoryChange}
-          onPageChange={catalog.onPageChange}
-          onItemsPerPageChange={catalog.onItemsPerPageChange}
-          onAddToCart={handleAddToCart}
-          onUpdateQuantity={handleUpdateQuantity}
-        />
-      </TabsContent>
-    </Tabs>
+        <TabsList className="grid w-full grid-cols-2 ">
+          <TabsTrigger value="invoice">Invoice Table</TabsTrigger>
+          <TabsTrigger value="catalog">Catalog</TabsTrigger>
+        </TabsList>
+        <TabsContent value="invoice">
+          <InvoiceTable 
+            items={cart}
+            products={products}
+            onQuantityChange={handleUpdateQuantity}
+            onRemoveItem={handleRemoveItem}
+            onShowCatalog={() => setActiveTab('catalog')}
+            grandTotal={invoiceData?.payment?.grandTotal ?? 0}
+          />
+        </TabsContent>
+        <TabsContent value="catalog">
+          <ProductCatalog 
+            searchQuery={searchQuery}
+            selectedCategories={selectedCategories}
+            currentPage={currentPage}
+            itemsPerPage={itemsPerPage}
+            cart={cart}
+            paginatedProducts={paginatedProducts}
+            totalPages={totalPages}
+            allCategories={allCategories}
+            onSearchChange={setSearchQuery}
+            onCategoryChange={setSelectedCategories}
+            onPageChange={setCurrentPage}
+            onItemsPerPageChange={setItemsPerPage}
+            onAddToCart={handleAddToCart}
+            onUpdateQuantity={handleUpdateQuantity}
+          />
+        </TabsContent>
+      </Tabs>
     </Card>
   );
 }

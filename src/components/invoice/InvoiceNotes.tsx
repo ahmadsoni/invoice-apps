@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Info } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { formatToRupiah } from "@/lib/formater";
+import useInvoiceStore from "@/store/invoiceStore";
 
 
 
@@ -44,22 +45,38 @@ function TransactionDetail({
             isHighlighted ? "text-blue-600" : ""
           }`}
         >
-          Rp. {formatToRupiah(amount)}
+          {formatToRupiah(amount)}
         </p>
       </div>
     </div>
   );
 }
-interface InvoiceNotesProps {
-  onTotalAmountChange: (value: number) => void;
-  onPaymentLinkActiveChange: (value: boolean) => void;
-  paymentLinkActive: boolean;
-  netPayment: number;
-  transactionFee: number;
-}
-export function InvoiceNotes(props: InvoiceNotesProps) {
-  const customerCharge = props.netPayment === 0 ? 0 : props.netPayment- props.transactionFee;
-  const amountTransfer = customerCharge === 0 ? 0 : customerCharge + props.transactionFee;
+
+export function InvoiceNotes() {
+   const { invoiceData, setInvoiceData } = useInvoiceStore((state) => ({
+    invoiceData: state.getInvoiceData(),
+    setInvoiceData: state.setInvoiceData,
+  }));
+  
+  const customerCharge =
+  invoiceData?.payment?.netPayment === undefined || invoiceData?.payment?.transactionFee === undefined
+    ? 0
+    : (invoiceData?.payment?.netPayment ?? 0) - (invoiceData.payment.transactionFee ?? 0);
+
+const amountTransfer =
+  customerCharge === 0 || invoiceData?.payment?.transactionFee === undefined
+    ? 0
+    : customerCharge + (invoiceData.payment.transactionFee ?? 0);
+
+
+
+    const handleCopyLinkModeChange = (value: boolean) => {
+       setInvoiceData({
+        payment: {
+          paymentLinkActive: value
+        }
+      })
+    }
   return (
     <Card className="p-6">
       <div className="space-y-6">
@@ -69,11 +86,11 @@ export function InvoiceNotes(props: InvoiceNotesProps) {
             <h3 className="text-lg font-semibold">Payment Link</h3>
             <Switch
               id="copy-link-mode"
-              checked={props.paymentLinkActive}
-              onClick={() => props.onPaymentLinkActiveChange(!props.paymentLinkActive)}
+              checked={invoiceData?.payment?.paymentLinkActive}
+              onClick={() => handleCopyLinkModeChange(!invoiceData?.payment?.paymentLinkActive)}
             />
           </div>
-          {props.paymentLinkActive && (
+          {invoiceData?.payment?.paymentLinkActive && (
             <div className="flex gap-4">
               <Input
                 value="The payment link will appear after you create the invoice document"
@@ -89,8 +106,8 @@ export function InvoiceNotes(props: InvoiceNotesProps) {
           <TransactionDetail
             title="Transaction Fee: Charge Customer"
             description="The full amount the customer will pay, including the transaction fee"
-            additionalInfoNumberOne={props.netPayment}
-            additionalInfoNumberTwo={props.transactionFee}
+            additionalInfoNumberOne={invoiceData?.payment?.netPayment ?? 0}
+            additionalInfoNumberTwo={invoiceData?.payment?.transactionFee ?? 0}
             operator="-"
             amount={customerCharge}
             amountDescription="Amount Transferred to You"
@@ -100,7 +117,7 @@ export function InvoiceNotes(props: InvoiceNotesProps) {
             title="Settlement: Auto Transfer to Bank"
             description="This is your net earnings after the auto transfer fee is deducted"
             additionalInfoNumberOne={customerCharge}
-            additionalInfoNumberTwo={props.transactionFee}
+            additionalInfoNumberTwo={invoiceData?.payment?.transactionFee ?? 0}
             operator="+"
             amount={amountTransfer}
             amountDescription="Amount Transferred to You"

@@ -4,12 +4,15 @@ import { Input } from "../ui/input";
 import { Eye } from "lucide-react";
 import { Button } from "../ui/button";
 
-export default function HeaderProduct() {
+interface HeaderProductProps {
+  onOpenPreviewChange: (value: boolean) => void;
+}
+export default function HeaderProduct(props: HeaderProductProps) {
   return (
      <Card className="w-full mb-6">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-7">
             <CardTitle className="text-2xl font-bold">Create Invoice Document</CardTitle>
-            <Button variant="ghost" className="text-primary font-semibold flex items-center gap-2">
+            <Button variant="ghost" onClick={() => props.onOpenPreviewChange(true)} className="text-primary font-semibold flex items-center gap-2">
               <Eye className="w-5 h-5" />
               Preview
             </Button>

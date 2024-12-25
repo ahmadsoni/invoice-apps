@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { useInvoiceStore } from "@/store/invoiceStore";
 import { useAuthStore } from "@/store/authStore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -12,15 +11,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useDocumentStore } from "@/store/documentStore";
+
 
 export function DocumentList() {
   const navigate = useNavigate();
-  const documents = useInvoiceStore((state: any) => state.documents);
+  const { documents, deleteDocument } = useDocumentStore();
   const { user, userName, logout } = useAuthStore();
 
   const handleLogout = async () => {
     await logout();
     navigate("/login");
+  };
+
+  const handleDelete = (id: string) => {
+    deleteDocument(id);
   };
 
   return (
@@ -29,7 +34,7 @@ export function DocumentList() {
         <h1 className="text-2xl font-bold">Invoice App</h1>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button  className="relative h-10 w-10 rounded-full bg-primary text-black">
+            <Button className="relative h-10 w-10 rounded-full bg-primary text-black">
               <Avatar className="h-10 w-10">
                 <AvatarFallback>{userName?.[0] || user?.email?.[0]}</AvatarFallback>
               </Avatar>
@@ -47,7 +52,6 @@ export function DocumentList() {
           </DropdownMenuContent>
         </DropdownMenu>
       </nav>
-
       <div className="flex flex-col flex-1 px-8 py-8">
         <div className="flex w-full justify-between items-center mb-6">
           <h2 className="text-2xl font-bold">Document List</h2>
@@ -57,7 +61,7 @@ export function DocumentList() {
         </div>
         <ScrollArea className="flex-1 rounded-md border">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-            {documents.map((document: any) => (
+            {documents.map((document) => (
               <Card key={document.id}>
                 <CardHeader className="flex flex-row items-center gap-4">
                   <FileText className="h-8 w-8 text-primary" />
@@ -75,6 +79,11 @@ export function DocumentList() {
                     <p>Total: Rp {document.total.toLocaleString()}</p>
                   </div>
                 </CardContent>
+                <div className="p-4 flex justify-between">
+                  <Button variant="outline" onClick={() => handleDelete(document.id)}>
+                    Delete
+                  </Button>
+                </div>
               </Card>
             ))}
             {documents.length === 0 && (
@@ -88,4 +97,3 @@ export function DocumentList() {
     </div>
   );
 }
-

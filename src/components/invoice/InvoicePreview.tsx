@@ -8,16 +8,16 @@ import {
 	Image,
 	Font,
 } from "@react-pdf/renderer";
-import { DocumentDownload, Eye } from "iconsax-react";
+// import { DocumentDownload, Eye } from "iconsax-react";
 import dayjs from "dayjs";
 import { DataPriceInvoiceInterface, DataProductInvoiceInterface, InvoicePdfInterface } from "@/types/invoice";
 
 Font.register({
 	family: "Inter",
 	fonts: [
-		{ src: "/assets/font/Inter/static/Inter-Regular.ttf", fontWeight: "normal" },
-		{ src: "/assets/font/Inter/static/Inter-Medium.ttf", fontWeight: "medium" },
-		{ src: "/assets/font/Inter/static/Inter-Bold.ttf", fontWeight: "bold" },
+		{ src: "@/assets/font/Inter/Inter-Regular.ttf", fontWeight: "normal" },
+		{ src: "@/assets/font/Inter/Inter-Medium.ttf", fontWeight: "medium" },
+		{ src: "@/assets/font/Inter/Inter-Bold.ttf", fontWeight: "bold" },
 	],
 });
 
@@ -470,7 +470,7 @@ const MyDocument = ({ data }: PdfExport) => {
 					</View>
 					<View style={styles.bodyInfoData}>
 						<Text style={styles.bodyInfoDataTitle}>Alamat:</Text>
-						<Text style={styles.bodyInfoDataContent}>{data.address}</Text>
+						<Text style={styles.bodyInfoDataContent}>{data.companyAddress}</Text>
 					</View>
 				</View>
         <View style={styles.bodyTable}>
@@ -676,20 +676,20 @@ const MyDocument = ({ data }: PdfExport) => {
 )};
 
 // Define your PDF generator component
-const PDFInvoice = ({ data, isPreview }: PdfInterface) => {
-  const loadingContent = <span>Loading document...</span>;
-  const previewContent = (
-    <div className="buttonPdf">
-      <Eye size="24" color="#6562DF" />
-      <p className="button_default">Preview</p>
-    </div>
-  );
-  const downloadContent = (
-    <div className="buttonPdf">
-      <DocumentDownload size="24" color="#333333" />
-      <p className="button_default">Download</p>
-    </div>
-  );
+const PDFInvoice = ({ data }: PdfInterface) => {
+//   const loadingContent = <span>Loading document...</span>;
+//   const previewContent = (
+//     <div className="buttonPdf">
+//       <Eye size="24" color="#6562DF" />
+//       <p className="button_default">Preview</p>
+//     </div>
+//   );
+//   const downloadContent = (
+//     <div className="buttonPdf">
+//       <DocumentDownload size="24" color="#333333" />
+//       <p className="button_default">Download</p>
+//     </div>
+//   );
 
   return (
     <div>
@@ -703,4 +703,7 @@ const PDFInvoice = ({ data, isPreview }: PdfInterface) => {
   );
 };
 
-export default PDFInvoice;
+export {
+	PDFInvoice,
+	MyDocument
+};

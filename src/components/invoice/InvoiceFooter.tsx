@@ -2,24 +2,13 @@ import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Info, Trash2 } from "lucide-react";
+import { Info, Trash2 } from 'lucide-react';
 import { Card } from "../ui/card";
 import { IconCirclePlusFilled, IconDiscountFilled, IconReceiptTax } from "@tabler/icons-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { formatToRupiah } from "@/lib/formater";
+import useInvoiceStore from "@/store/invoiceStore";
 
-interface InvoiceFooterProps {
-  bankAccount: string;
-  terms: string;
-  onBankAccountChange: (value: string) => void;
-  onTermsChange: (value: string) => void;
-  grandTotal: number;
-  onAmountPaymentChange: (value: number) => void;
-  onVatChange: (value: number) => void;
-  onTaxableAmountChange: (value: number) => void;
-  onNetPaymentChange: (value: number) => void;
-  onTotalValueVatChange: (value: number) => void;
-}
 
 interface DynamicField {
   id: number;
@@ -27,22 +16,14 @@ interface DynamicField {
   value: number;
 }
 
-export default function InvoiceFooter({
-  bankAccount,
-  terms,
-  onBankAccountChange,
-  onTermsChange,
-  grandTotal,
-  onAmountPaymentChange,
-  onVatChange,
-  onTaxableAmountChange,
-  onNetPaymentChange,
-  onTotalValueVatChange
-}: InvoiceFooterProps) {
-  const [promoFields, setPromoFields] = useState<DynamicField[]>([]);
+export default function InvoiceFooter() {
+  const { invoiceData, setInvoiceData } = useInvoiceStore((state) => ({
+    invoiceData: state.getInvoiceData(),
+    setInvoiceData: state.setInvoiceData,
+  }));
+   const [promoFields, setPromoFields] = useState<DynamicField[]>([]);
   const [vatFields, setVatFields] = useState<DynamicField[]>([]);
   const [error, setError] = useState<string | null>(null);
-
   const handleAddPromoField = () => {
     setPromoFields((prevFields) => [
       ...prevFields,
@@ -60,14 +41,14 @@ export default function InvoiceFooter({
   };
 
   const handleFieldChange = (id: number, value: string, type: "promo" | "vat") => {
-    const numericValue = parseFloat(value.replace(/\D/g, "")) || 0;
+    const numericValue = parseFloat(value.replace(/\D/g, "")) ?? 0;
     
     if (type === "promo") {
       const newPromoFields = promoFields.map((field) =>
         field.id === id ? { ...field, value: numericValue } : field
       );
       const totalDiscount = newPromoFields.reduce((sum, field) => sum + field.value, 0);
-      if (totalDiscount > grandTotal) {
+      if (totalDiscount > (invoiceData?.payment?.grandTotal ?? 0)) {
         setError("Total discount cannot exceed grand total amount");
         return;
       }
@@ -101,10 +82,12 @@ export default function InvoiceFooter({
     }
     setError(null);
   };
-
+  const calculateTotalDiscount = () => {
+      return promoFields.reduce((sum, field) => sum + field.value, 0);
+    };
   const calculateNetPayment = () => {
-    const totalDiscount = promoFields.reduce((sum, field) => sum + field.value, 0);
-    let afterDiscount = grandTotal - totalDiscount;
+    const totalDiscount = calculateTotalDiscount();
+    let afterDiscount = (invoiceData?.payment?.grandTotal ?? 0) - totalDiscount;
     const totalVatAmount = vatFields.reduce((sum, field) => {
       const vatAmount = (afterDiscount * field.value) / 100;
       return sum + vatAmount;
@@ -112,12 +95,10 @@ export default function InvoiceFooter({
     return afterDiscount - totalVatAmount;
   };
 
-  const calculateTotalDiscount = () => {
-    return promoFields.reduce((sum, field) => sum + field.value, 0);
-  };
+  
 
   const calculateTotalVat = () => {
-    const afterDiscount = grandTotal - calculateTotalDiscount();
+    const afterDiscount = (invoiceData?.payment?.grandTotal ?? 0) - calculateTotalDiscount();
     return vatFields.reduce((sum, field) => {
       const vatAmount = (afterDiscount * field.value) / 100;
       return sum + vatAmount;
@@ -131,20 +112,42 @@ export default function InvoiceFooter({
   };
 
 
-  const netPayment = calculateNetPayment();
   const totalVAT = calculateAverageVat();
   const totalDiscount = calculateTotalDiscount();
   const totalValueVat = calculateTotalVat();
+  const netPayment = calculateNetPayment() - totalDiscount;
   const isNegative = netPayment < 0;
 
-  useEffect(()=> {
-    onAmountPaymentChange(netPayment);
-    onNetPaymentChange(netPayment);
-    onVatChange(totalVAT);
-    onTaxableAmountChange(grandTotal);
-    onTotalValueVatChange(totalValueVat);
-  }, [netPayment, totalVAT])
+  const handleBankAccountChange = (value: string) => {
+    setInvoiceData({
+      payment: {
+        bankAccount: value
+      }
+    })
+  }
 
+  const handleTermsChange = (value:string) => {
+    setInvoiceData({
+      invoice: {
+        terms: value
+      }
+    })
+  }
+  
+  useEffect(() => {
+    setInvoiceData({
+      payment: {
+        netPayment: netPayment,
+        vat: totalVAT,
+        totalValueVat: totalValueVat,
+        taxableAmount: invoiceData?.payment?.grandTotal ?? 0,
+        totalAmount: netPayment,
+        grandTotal: invoiceData?.payment?.grandTotal,
+      }
+    })
+    console.log(invoiceData.payment)
+  }, [netPayment, totalVAT, invoiceData?.payment?.grandTotal, totalValueVat]);
+  
   return (
     <Card className="p-6 space-y-6">
       {error && (
@@ -169,8 +172,8 @@ export default function InvoiceFooter({
             <Input
               placeholder="Add Notes 'Bank XYZ, Account: 1234'"
               className="mb-4"
-              value={bankAccount}
-              onChange={(e) => onBankAccountChange(e.target.value)}
+              value={invoiceData?.payment?.bankAccount}
+              onChange={(e) => handleBankAccountChange(e.target.value)}
             />
           </div>
           {/* Terms & Conditions */}
@@ -184,8 +187,8 @@ export default function InvoiceFooter({
             <Textarea
               placeholder="Add terms and conditions"
               className="h-20"
-              value={terms}
-              onChange={(e) => onTermsChange(e.target.value)}
+              value={invoiceData?.invoice?.terms}
+              onChange={(e) => handleTermsChange(e.target.value)}
             />
           </div>
         </div>
@@ -200,7 +203,7 @@ export default function InvoiceFooter({
                 Grand Total
               </Button>
               <span className="flex items-center gap-2">
-                Rp. {formatToRupiah(grandTotal)}
+                {formatToRupiah(invoiceData?.payment?.grandTotal ?? 0)}
               </span>
             </div>
 
@@ -216,7 +219,7 @@ export default function InvoiceFooter({
                   </Button>
                   <div className="relative flex items-center gap-2">
                     <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-red-500">
-                      -Rp.
+                      -
                     </span>
                     <Input
                       value={field.value.toString()}
@@ -262,7 +265,7 @@ export default function InvoiceFooter({
                   Total Discount
                 </Button>
                 <span className="flex items-center gap-2 text-red-500">
-                  -Rp. {formatToRupiah(totalDiscount)}
+                  -{formatToRupiah(totalDiscount)}
                 </span>
               </div>
             )}
@@ -325,7 +328,7 @@ export default function InvoiceFooter({
                   Total VAT
                 </Button>
                 <span className="flex items-center gap-2 text-red-500">
-                  -Rp. {formatToRupiah(totalValueVat)}
+                  -{formatToRupiah(totalValueVat)}
                 </span>
               </div>
             )}
@@ -343,7 +346,7 @@ export default function InvoiceFooter({
                   isNegative ? "text-red-500" : "text-green-500"
                 }`}
               >
-                {isNegative ? "-" : ""} Rp. {formatToRupiah(Math.abs(netPayment))}
+                {isNegative ? "-" : ""} {formatToRupiah(netPayment)}
               </span>
             </div>
           </div>
@@ -352,3 +355,4 @@ export default function InvoiceFooter({
     </Card>
   );
 }
+
