@@ -15,43 +15,51 @@ import { useAuthStore } from "@/store/authStore";
 import { useInvoices } from "@/hooks/use-invoices";
 import { db } from "@/lib/firebase";
 import { collection, doc } from "firebase/firestore";
+import useEditorModeStore from "@/store/editorModeStore";
+import { InvoiceData } from "@/types/invoice";
 
 
 
 export function CreateInvoice() {
   const navigate = useNavigate();
+  
    const { user } = useAuthStore();
    const invoiceRef =  doc(collection(db, "invoices"));
+   const {addInvoice, updateInvoice} = useInvoices();
+   const { mode, id } = useEditorModeStore();
    const newInvoiceKey = invoiceRef.id;
    const [userUUID, setUserUUID] = useState('');
    const [invoiceKey, setInvoiceKey] = useState('')
-   const {addInvoice} = useInvoices();
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [openPreview, setOpenPreview] = useState(false);
-  const[isLoading, setIsloading] = useState(false);
-  const { invoiceData, setInvoiceData, resetInvoiceData } = useInvoiceStore((state) => ({
-    setInvoiceData: state.setInvoiceData,
-    invoiceData: state.getInvoiceData(),
-    resetInvoiceData: state.resetInvoiceData,
-  }));
-  useEffect(() => {
+   const [openPreview, setOpenPreview] = useState(false);
+   const[isLoading, setIsloading] = useState(false);
+   const { invoiceData, setInvoiceData, resetInvoiceData } = useInvoiceStore((state) => ({
+     setInvoiceData: state.setInvoiceData,
+     invoiceData: state.getInvoiceData(),
+     resetInvoiceData: state.resetInvoiceData,
+    }));
+    const [cart, setCart] = useState<CartItem[]>([]);
+    useEffect(() => {
+      if (mode === "update") {
+        setCart(invoiceData?.cart || []); 
+      } else {
+        setCart([]);
+      }
+    }, [mode]);
+    useEffect(() => {
     setUserUUID(user!.uid || '');
     setInvoiceKey(newInvoiceKey);
   }, [user?.uid, newInvoiceKey])
   function onOpenDialog () {
     setOpenPreview(!openPreview);
   }
-
+  
   const handleCreateInvoice = async () => {
     setIsloading(true);
     if (!invoiceKey || !userUUID) {
       console.error("Invoice Key or User UUID is not available yet.");
       return; 
     }
-
     try {
-      console.log("userUUID", userUUID, "invoiceKey", invoiceKey);
-
       const newInvoiceData = {
         ...invoiceData,
         id: invoiceKey,
@@ -71,6 +79,25 @@ export function CreateInvoice() {
       console.error('Gagal membuat invoice:', error);
     }
   };
+
+  const handleUpdateInvoice = async () => {
+    setIsloading(true);
+    try {
+      const newInvoiceData: InvoiceData = {
+        ...invoiceData,
+        cart: cart
+      };
+      setInvoiceData(newInvoiceData);
+      await updateInvoice(id ?? '', newInvoiceData);
+      resetInvoiceData();
+      setIsloading(false);
+      navigate('/');
+    } catch (error) {
+      setIsloading(false);
+      console.error('Gagal update invoice:', error);
+    }
+  };
+
 
   const handleCancle = () => {
     resetInvoiceData();
@@ -100,7 +127,7 @@ export function CreateInvoice() {
               <Button
                 size="lg"
                 className="flex gap-2 items-center justify-center"
-                onClick={handleCreateInvoice}
+                onClick={mode === 'update' ? handleUpdateInvoice : handleCreateInvoice}
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -110,7 +137,7 @@ export function CreateInvoice() {
                   </>
                 ) : (
                   <>
-                    Create Invoice Document
+                    {`${mode === 'update' ? 'Update' : 'Create'}`} Invoice Document
                     <IconPlus className="w-5 h-5" />
                   </>
                 )}

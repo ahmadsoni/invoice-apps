@@ -59,9 +59,9 @@ export function InvoiceNotes() {
   }));
   
   const customerCharge =
-  invoiceData?.payment?.netPayment === undefined || invoiceData?.payment?.transactionFee === undefined
+  invoiceData?.payment?.netPayment === undefined ?? invoiceData?.payment?.transactionFee === undefined
     ? 0
-    : (invoiceData?.payment?.netPayment ?? 0) - (invoiceData.payment.transactionFee ?? 0);
+    : (invoiceData!.payment!.netPayment ?? 0) - (invoiceData.payment.transactionFee ?? 0);
 
 const amountTransfer =
   customerCharge === 0 || invoiceData?.payment?.transactionFee === undefined

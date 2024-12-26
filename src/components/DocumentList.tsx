@@ -16,14 +16,16 @@ import { useInvoices } from "@/hooks/use-invoices";
 import { Badge } from "@/components/ui/badge";
 import useEditorModeStore from "@/store/editorModeStore";
 import useInvoiceStore from "@/store/invoiceStore";
+import { toast } from "react-toastify";
 
 export function DocumentList() {
   const navigate = useNavigate();
-  const { setInvoiceData } = useInvoiceStore((state) => ({
-    invoiceData: state.getInvoiceData(),
-  }));
+  const { setInvoiceData, resetInvoiceData } = useInvoiceStore((state) => ({
+     setInvoiceData: state.setInvoiceData,
+     resetInvoiceData: state.resetInvoiceData,
+    }));
   const { user, userName, logout } = useAuthStore();
-  const { invoices, error, getInvoiceByUserId, deleteInvoice} = useInvoices();
+  const { invoices, error, getInvoiceByUserId, deleteInvoice, getInvoiceById} = useInvoices();
   const [filteredInvoices, setFilteredInvoices] = useState(invoices);
   const [initialLoading, setInitialLoading] = useState(true);
   const { setMode, resetMode } = useEditorModeStore();
@@ -52,12 +54,33 @@ export function DocumentList() {
   const handleDelete = async (id: string) => {
     await deleteInvoice(id);
   };
-
-  const handleEditInvoice = (id: string) => {
-    setMode("update");
-    // setInvoiceData();
-    // navigate(`/edit-invoice/${id}`);
+  useEffect(() => {
+    resetInvoiceData();
+  }, [])
+  const handleEditInvoice = async (id: string) => {
+    try {
+      setMode("update", id);
+      const updateInvoiceData = await getInvoiceById(id); 
+      if (!updateInvoiceData) {
+        throw new Error("Invoice data not found or invalid.");
+      }
+      setInvoiceData(updateInvoiceData);
+      navigate("/create-invoice");
+    } catch (error) {
+      console.error("Failed to edit invoice:", error);
+      toast.error("An unexpected error occurred while editing the invoice.", {
+        position: "top-right",
+        autoClose: 5000, 
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+    }
   };
+
+  
   const handleCreateInvoice = () => {
     resetMode();
     navigate("/create-invoice")

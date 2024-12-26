@@ -116,6 +116,7 @@ export default function InvoiceFooter() {
   const handleBankAccountChange = (value: string) => {
     setInvoiceData({
       payment: {
+        ...invoiceData?.payment,
         bankAccount: value
       }
     })
@@ -124,6 +125,7 @@ export default function InvoiceFooter() {
   const handleTermsChange = (value:string) => {
     setInvoiceData({
       invoice: {
+        ...invoiceData?.payment,
         terms: value
       }
     })
@@ -138,6 +140,7 @@ export default function InvoiceFooter() {
   useEffect(() => {
     setInvoiceData({
       payment: {
+        ...invoiceData?.payment,
         transactionFee: 10000,
         netPayment: netPayment,
         vat: totalVAT,
@@ -147,7 +150,7 @@ export default function InvoiceFooter() {
         grandTotal: invoiceData?.payment?.grandTotal,
       }
     })
-  }, [netPayment, totalVAT, invoiceData?.payment?.grandTotal, totalValueVat]);
+  }, [netPayment, totalVAT, totalValueVat]);
 
   
   return (
