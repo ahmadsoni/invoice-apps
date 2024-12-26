@@ -39,36 +39,36 @@ export default function InvoiceFooter() {
     ]);
     setError(null);
   };
-
+  
   const handleFieldChange = (id: number, value: string, type: "promo" | "vat") => {
-    const numericValue = parseFloat(value.replace(/\D/g, "")) ?? 0;
-    
-    if (type === "promo") {
-      const newPromoFields = promoFields.map((field) =>
-        field.id === id ? { ...field, value: numericValue } : field
-      );
-      const totalDiscount = newPromoFields.reduce((sum, field) => sum + field.value, 0);
-      if (totalDiscount > (invoiceData?.payment?.grandTotal ?? 0)) {
-        setError("Total discount cannot exceed grand total amount");
-        return;
-      }
-      
-      setPromoFields(newPromoFields);
-      setError(null);
-    } else if (type === "vat") {
-      if (numericValue > 100) {
-        setError("VAT percentage cannot exceed 100%");
-        return;
-      }
-      
-      setVatFields((prevFields) =>
-        prevFields.map((field) =>
+      const numericValue = value === "" ? 0 : parseFloat(value.replace(/\D/g, ""));
+      if (type === "promo") {
+        const newPromoFields = promoFields.map((field) =>
           field.id === id ? { ...field, value: numericValue } : field
-        )
-      );
-      setError(null);
-    }
-  };
+        );
+        const totalDiscount = newPromoFields.reduce((sum, field) => sum + field.value, 0);
+        if (totalDiscount > (invoiceData?.payment?.grandTotal ?? 0)) {
+          setError("Total discount cannot exceed grand total amount");
+          return;
+        }
+        
+        setPromoFields(newPromoFields);
+        setError(null);
+      } else if (type === "vat") {
+        if (numericValue > 100) {
+          setError("VAT percentage cannot exceed 100%");
+          return;
+        }
+        
+        setVatFields((prevFields) =>
+          prevFields.map((field) =>
+            field.id === id ? { ...field, value: numericValue } : field
+          )
+        );
+        setError(null);
+      }
+    };
+
 
   const handleRemoveField = (id: number, type: "promo" | "vat") => {
     if (type === "promo") {
@@ -96,7 +96,6 @@ export default function InvoiceFooter() {
   };
 
   
-
   const calculateTotalVat = () => {
     const afterDiscount = (invoiceData?.payment?.grandTotal ?? 0) - calculateTotalDiscount();
     return vatFields.reduce((sum, field) => {
@@ -112,11 +111,7 @@ export default function InvoiceFooter() {
   };
 
 
-  const totalVAT = calculateAverageVat();
-  const totalDiscount = calculateTotalDiscount();
-  const totalValueVat = calculateTotalVat();
-  const netPayment = calculateNetPayment() - totalDiscount;
-  const isNegative = netPayment < 0;
+ 
 
   const handleBankAccountChange = (value: string) => {
     setInvoiceData({
@@ -134,9 +129,16 @@ export default function InvoiceFooter() {
     })
   }
   
+  const totalVAT = calculateAverageVat();
+  const totalDiscount = calculateTotalDiscount();
+  const totalValueVat = calculateTotalVat();
+  const netPayment = calculateNetPayment() - totalDiscount;
+  const isNegative = netPayment < 0;
+
   useEffect(() => {
     setInvoiceData({
       payment: {
+        transactionFee: 10000,
         netPayment: netPayment,
         vat: totalVAT,
         totalValueVat: totalValueVat,
@@ -145,8 +147,8 @@ export default function InvoiceFooter() {
         grandTotal: invoiceData?.payment?.grandTotal,
       }
     })
-    console.log(invoiceData.payment)
   }, [netPayment, totalVAT, invoiceData?.payment?.grandTotal, totalValueVat]);
+
   
   return (
     <Card className="p-6 space-y-6">
@@ -219,7 +221,7 @@ export default function InvoiceFooter() {
                   </Button>
                   <div className="relative flex items-center gap-2">
                     <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-red-500">
-                      -
+                      -Rp
                     </span>
                     <Input
                       value={field.value.toString()}

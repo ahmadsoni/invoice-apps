@@ -16,24 +16,28 @@ export const products: Product[] = [
     ],
     variants: [
       {
+        id: '1',
         size: "Standard",
         flavor: "Original",
         price: 65000,
         image: '/src/assets/catalog/almond-milk.svg?height=50&width=50',
       },
       {
+        id: '2',
         size: "Standard",
         flavor: "Choco",
         price: 65000,
-         image: '/src/assets/catalog/almond-milk.svg?height=50&width=50',
+        image: '/src/assets/catalog/almond-milk.svg?height=50&width=50',
       },
       {
+        id: '3',
         size: "Large",
         flavor: "Original",
         price: 85000,
          image: '/src/assets/catalog/almond-milk.svg?height=50&width=50',
       },
       {
+        id: '4',
         size: "Large",
         flavor: "Choco",
         price: 85000,
@@ -56,16 +60,19 @@ export const products: Product[] = [
     ],
     variants: [
       {
+        id: '1',
         flavor: "Peach",
         price: 68000,
         image: '/src/assets/catalog/chia-jam.svg?height=50&width=50',
       },
       {
+        id: '2',
         flavor: "Blueberry",
         price: 68000,
         image: '/src/assets/catalog/chia-jam-bluebery.svg?height=50&width=50',
       },
       {
+        id: '3',
         flavor: "Strawberry",
         price: 68000,
         image: '/src/assets/catalog/chia-jam-strobery.svg?height=50&width=50',

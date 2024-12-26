@@ -5,13 +5,17 @@ export interface DataPriceInvoiceInterface {
 }
 
 export interface InvoiceData {
-  id?: string;
+  id?: string | null;
+  user?: {
+    id: string;
+  },
   company?: {
     name?: string;
     address?: string;
     phone?: string;
   };
   invoice?: {
+    name?: string;
     number?: string;
     date?: string;
     dueDate?: string;

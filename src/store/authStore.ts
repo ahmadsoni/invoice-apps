@@ -11,8 +11,6 @@ interface AuthState {
   logout: () => Promise<void>;
 }
 
-const EXPIRATION_TIME = 1000 * 60 * 60 * 24;
-
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
@@ -30,27 +28,16 @@ export const useAuthStore = create<AuthState>()(
       storage: createJSONStorage(() => ({
         getItem: (key) => {
           const item = localStorage.getItem(key);
-          if (item) {
-            const parsedItem = JSON.parse(item);
-            const now = Date.now();
-            if (parsedItem.timestamp && now - parsedItem.timestamp > EXPIRATION_TIME) {
-              localStorage.removeItem(key);
-              return null;
-            }
-            return JSON.stringify(parsedItem.data);
-          }
-          return null;
+          return item ? JSON.parse(item) : null;
         },
         setItem: (key, value) => {
-          const dataToStore = {
-            data: JSON.parse(value),
-            timestamp: Date.now(),
-          };
-          localStorage.setItem(key, JSON.stringify(dataToStore));
+          localStorage.setItem(key, value);
         },
-        removeItem: (key) => localStorage.removeItem(key),
+        removeItem: (key) => {
+          localStorage.removeItem(key);
+        },
       })),
-      partialize: (state) => ({ userName: state.userName }),
+      partialize: (state) => ({ user: state.user, userName: state.userName }),
     }
   )
 );

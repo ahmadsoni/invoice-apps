@@ -5,14 +5,14 @@ import { Product, CartItem } from '../../types/product';
 import { IconDiscountFilled } from '@tabler/icons-react';
 import { formatToRupiah } from '@/lib/formater';
 import { ScrollArea } from '../ui/scroll-area';
+import { UpdateQuantity,AddToCart } from '@/types/product';
 
 interface ProductCardProps {
   product: Product;
   cartItems: CartItem[];
-  onAddToCart: (item: CartItem) => void;
+  onAddToCart: ({product, selectedVariant}:AddToCart) => void;
   onUpdateQuantity: ( 
-    productId: string,
-    newQuantity: number
+  {productId, variantId, newQuantity}: UpdateQuantity
     ) => void;
 }
 
@@ -128,18 +128,25 @@ export function ProductCard({
     product?.variants?.find(
       (v) => v.size === selectedSize && v.flavor === selectedFlavor
     ) || product?.variants?.[0] || { size: undefined, flavor: undefined, price: 0 };
-
+      
   const handleAddToCart = () => {
+    const isVariantValid = selectedVariant?.size || selectedVariant?.flavor;
     if (!selectedVariant) {
       alert("Pilih varian terlebih dahulu.");
       return;
     }
+    const payload = {
+      product,
+      selectedVariant: isVariantValid ? selectedVariant : undefined, 
+    };
+
     onAddToCart({
-      productId: product.id,
-      basePrice: product.basePrice,
-      selectedVariant,
-      quantity: 1,
+      product: payload.product,
+      selectedVariant: payload.selectedVariant
     });
+
+    console.log("Payload sent to cart:", payload);
+    console.log("Cart items after addition:", cartItems);
   };
 
   const getSubtotal = () => {
@@ -178,6 +185,28 @@ export function ProductCard({
     item.selectedVariant?.size === selectedSize && 
     item.selectedVariant?.flavor === selectedFlavor
   );
+
+  const onDecrease = () => {
+    if (cartItem && cartItem.quantity > 0) {
+      onUpdateQuantity({
+        productId: product.id,
+        variantId: selectedVariant?.id ?? null,
+        newQuantity: Math.max(0, cartItem.quantity - 1),
+      });
+    }
+  };
+
+  const onIncrease = () => {
+    if (cartItem) {
+      onUpdateQuantity({
+        productId: product.id,
+        variantId: selectedVariant?.id ?? null,
+        newQuantity: cartItem.quantity + 1,
+      });
+    } else {
+      handleAddToCart();
+    }
+  };
 
   return (
     <div className="flex flex-col sm:flex-row justify-between p-4 gap-4 border rounded-lg bg-white">
@@ -237,18 +266,8 @@ export function ProductCard({
           </Button>
           <QuantityControls
             quantity={cartItem?.quantity || 0}
-            onDecrease={() => {
-              if (cartItem && cartItem.quantity > 0) {
-                onUpdateQuantity(product.id, cartItem.quantity - 1);
-              }
-            }}
-            onIncrease={() => {
-              if (cartItem) {
-                onUpdateQuantity(product.id, cartItem.quantity + 1);
-              } else {
-                handleAddToCart();
-              }
-            }}
+            onDecrease={onDecrease}
+            onIncrease={onIncrease}
           />
         </div>
       </div>

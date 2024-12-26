@@ -73,6 +73,7 @@ const amountTransfer =
     const handleCopyLinkModeChange = (value: boolean) => {
        setInvoiceData({
         payment: {
+          ...invoiceData?.payment,
           paymentLinkActive: value
         }
       })

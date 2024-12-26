@@ -8,14 +8,14 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus, Minus, Trash2 } from "lucide-react";
+import { Plus, Minus, Trash2 } from 'lucide-react';
 import { formatToRupiah } from "@/lib/formater";
-import { Product } from "@/types/product";
+import { CartItem, DeleteToCart, Product, UpdateQuantity } from "@/types/product";
 
 type InvoiceTableProps = {
-  items: Array<{ productId: string; quantity: number }>;
-  onQuantityChange: (productId: string, newQuantity: number) => void;
-  onRemoveItem: (productId: string) => void;
+  items: CartItem[];
+  onQuantityChange: ({productId, variantId, newQuantity}: UpdateQuantity) => void;
+  onRemoveItem: ({productId, variantId}: DeleteToCart) => void;
   onShowCatalog: () => void;
   grandTotal: number;
   products: Product[];
@@ -52,15 +52,15 @@ export function InvoiceTable({
               const product = products.find((p) => p.id === item.productId);
               if (!product) return null;
 
-              const price = product.basePrice;
+              const price = item.basePrice;
               const subTotal = price * item.quantity;
 
               return (
-                <TableRow key={item.productId}>
+                <TableRow key={`${item.productId}-${item.selectedVariant?.id ?? 'default'}`}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <img
-                        src={product.image}
+                        src={item.selectedVariant?.image ?? product.image}
                         alt={product.name}
                         className="w-12 h-12 object-cover rounded"
                       />
@@ -69,6 +69,20 @@ export function InvoiceTable({
                         <div className="text-sm text-muted-foreground">
                           {formatToRupiah(price)}
                         </div>
+                        {item.selectedVariant && (
+                          <>
+                            {item.selectedVariant.flavor && (
+                              <div className="text-xs text-muted-foreground">
+                                Variant (Flavor): {item.selectedVariant.flavor}
+                              </div>
+                            )}
+                            {item.selectedVariant.size && (
+                              <div className="text-xs text-muted-foreground">
+                                Variant (Size): {item.selectedVariant.size}
+                              </div>
+                            )}
+                          </>
+                        )}
                       </div>
                     </div>
                   </TableCell>
@@ -79,7 +93,11 @@ export function InvoiceTable({
                         size="icon"
                         className="h-8 w-8"
                         onClick={() =>
-                          onQuantityChange(item.productId, Math.max(0, item.quantity - 1))
+                           onQuantityChange({
+                            productId: item.productId,
+                            variantId: item.selectedVariant?.id ?? null,
+                            newQuantity: Math.max(0, item.quantity - 1),
+                          })
                         }
                       >
                         <Minus className="h-4 w-4" />
@@ -90,7 +108,11 @@ export function InvoiceTable({
                         size="icon"
                         className="h-8 w-8"
                         onClick={() =>
-                          onQuantityChange(item.productId, item.quantity + 1)
+                          onQuantityChange({
+                            productId: item.productId,
+                            variantId: item.selectedVariant?.id ?? null,
+                            newQuantity: item.quantity + 1,
+                          })
                         }
                       >
                         <Plus className="h-4 w-4" />
@@ -105,7 +127,12 @@ export function InvoiceTable({
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8"
-                      onClick={() => onRemoveItem(item.productId)}
+                      onClick={() => 
+                        onRemoveItem({
+                          productId: item.productId,
+                          variantId: item.selectedVariant?.id ?? null,
+                        })
+                      }
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -126,3 +153,4 @@ export function InvoiceTable({
     </Card>
   );
 }
+

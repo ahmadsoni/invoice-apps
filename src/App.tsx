@@ -6,6 +6,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRouter';
 import LoginPage from '@/components/auth/Login';
 import RegisterPage from '@/components/auth/Register';
 import { StoreProvider } from '@/components/StoreProvider';
+import { ToastContainer } from 'react-toastify';
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
             <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>
           <Toaster />
+          <ToastContainer />
         </div>
       </Router>
     </StoreProvider>

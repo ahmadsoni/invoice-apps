@@ -1,32 +1,18 @@
-import { db } from "@/lib/firebase";
-import { collection, doc, setDoc } from "firebase/firestore";
-import { products } from "@/data/products";
+import { Product } from '@/types/product';
+import { products } from '@/data/products';
+import { addDoc, collection } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
-const addProductsToFirestore = async () => {
+const addProductsToFirestore = async (products: Product[]) => {
   try {
     for (const product of products) {
-      const productRef = doc(collection(db, "products"), product.id);
-      await setDoc(productRef, {
-        id: product.id,
-        name: product.name,
-        basePrice: product.basePrice,
-        image: product.image,
-        category: product.category,
-        description: product.description,
-        thumbnails: product.thumbnails,
-      });
-      if (product.variants && product.variants.length > 0) {
-        const variantsCollectionRef = collection(productRef, "variants");
-        for (const variant of product.variants) {
-          const variantRef = doc(variantsCollectionRef);
-          await setDoc(variantRef, variant);
-        }
-      }
+      const docRef = await addDoc(collection(db, 'products'), product);
+      console.log("Product document written with ID: ", docRef.id);
     }
-    console.log("Produk berhasil ditambahkan ke Firestore!");
-  } catch (error) {
-    console.error("Gagal menambahkan produk ke Firestore:", error);
+    console.log("All products have been successfully uploaded to Firestore.");
+  } catch (e) {
+    console.error("Error adding document: ", e);
   }
 };
 
-addProductsToFirestore();
+addProductsToFirestore(products);

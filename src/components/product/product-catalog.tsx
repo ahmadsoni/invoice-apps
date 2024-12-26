@@ -90,8 +90,8 @@ export function ProductCatalog({
             key={product.id}
             product={product}
             cartItems={cart}
-            onAddToCart={() => onAddToCart(product.id)}
-            onUpdateQuantity={(productId: string, newQuantity: number) => onUpdateQuantity(productId, newQuantity)}
+            onAddToCart={onAddToCart}
+            onUpdateQuantity={onUpdateQuantity}
           />
         ))}
       </div>

@@ -1,19 +1,21 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProductCatalog } from "@/components/product/product-catalog";
 import { InvoiceTable } from "@/components/invoice/InvoiceTable";
-import { CartItem } from "@/types/product";
-import { products } from "@/data/products";
-import { Card } from "../ui/card";
+import { AddToCart, CartItem, DeleteToCart, UpdateQuantity } from "@/types/product";
+import { Card } from "@/components/ui/card";
 import { useEffect, useMemo, useState } from "react";
 import useInvoiceStore from "@/store/invoiceStore";
+import { useProducts } from "@/hooks/use-products";
+
 
 const ITEMS_PER_PAGE = 5;
-const allCategories = Array.from(
-  new Set(products.flatMap(product => product.category))
-);
 
-export function Product() {
-  const [cart, setCart] = useState<CartItem[]>([]);
+interface ProductSectionProps {
+  cart: CartItem[];
+  setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
+}
+export function ProductSection({ cart, setCart }: ProductSectionProps) {
+  const { products, loading, error } = useProducts();
   const [activeTab, setActiveTab] = useState<string>("catalog");
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -23,33 +25,22 @@ export function Product() {
     invoiceData: state.getInvoiceData(),
     setInvoiceData: state.setInvoiceData,
   }));
-  console.log("cart", cart);
-  const handleAddToCart = (item: CartItem) => {
-    setCart(prevCart => {
-      const existingItemIndex = prevCart.findIndex(cartItem => cartItem.productId === item.productId);
-      if (existingItemIndex !== -1) {
-        const updatedCart = [...prevCart];
-        updatedCart[existingItemIndex].quantity += 1;
-        return updatedCart;
-      } else {
-        const product = products.find(p => p.id === item.productId);
-        if (product) {
-          return [
-            ...prevCart,
-            { productId: item.productId, basePrice: product.basePrice, quantity: 1 }
-          ];
-        }
-        return prevCart;
-      }
-    });
-  };
+  
+  
+  const allCategories = useMemo(() => 
+    Array.from(new Set(products.flatMap(product => product.category))),
+    [products]
+  );
 
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategories.length === 0 || 
-      product.category.some(cat => selectedCategories.includes(cat));
-    return matchesSearch && matchesCategory;
-  });
+  const filteredProducts = useMemo(() => 
+    products.filter(product => {
+      const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = selectedCategories.length === 0 || 
+        product.category.some(cat => selectedCategories.includes(cat));
+      return matchesSearch && matchesCategory;
+    }), 
+    [products, searchQuery, selectedCategories]
+  );
 
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
   const paginatedProducts = filteredProducts.slice(
@@ -57,32 +48,54 @@ export function Product() {
     currentPage * itemsPerPage
   );
 
-  const handleUpdateQuantity = (
-    productId: string,
-    newQuantity: number
-  ) => {
+  const handleAddToCart = ({ product, selectedVariant }: AddToCart) => {
     setCart(prevCart => {
-      const updatedCart = prevCart.map(item => 
-        item.productId === productId
-          ? { ...item, quantity: newQuantity }
-          : item
+      const existingItemIndex = prevCart.findIndex(item => 
+        item.productId === product.id && 
+        ((!item.selectedVariant && !selectedVariant) || 
+         (item.selectedVariant?.id === selectedVariant?.id))
       );
-      return updatedCart;
+      if (existingItemIndex !== -1) {
+        const updatedCart = [...prevCart];
+        updatedCart[existingItemIndex].quantity += 1;
+        return updatedCart;
+      } else {
+        const newItem: CartItem = {
+          productId: product.id,
+          basePrice: selectedVariant?.price ?? product.basePrice,
+          selectedVariant: selectedVariant ?? null,
+          quantity: 1
+        };
+        return [...prevCart, newItem];
+      }
     });
   };
 
-  const handleRemoveItem = (productId: string) => {
-    setCart(prevCart => prevCart.filter(item => item.productId !== productId));
+  const handleUpdateQuantity = ({ productId, variantId, newQuantity }: UpdateQuantity) => {
+    setCart(prevCart => {
+      const updatedCart = prevCart.map(item => {
+        if (item.productId === productId) {
+          if ((!item.selectedVariant && !variantId) || 
+              (item.selectedVariant?.id === variantId)) {
+            return { ...item, quantity: Math.max(0, newQuantity) };
+          }
+        }
+        return item;
+      });
+      return updatedCart.filter(item => item.quantity > 0);
+    });
+  };
+
+  const handleRemoveItem = ({ productId, variantId }: DeleteToCart) => {
+    setCart(prevCart => prevCart.filter(item => 
+      !(item.productId === productId && 
+        ((!item.selectedVariant && !variantId) || 
+         (item.selectedVariant?.id === variantId)))
+    ));
   };
 
   const total = useMemo(() => {
-    return cart.reduce((sum, { productId, quantity }) => {
-      const product = products.find(p => p.id === productId);
-      if (product) {
-        return sum + (product.basePrice * quantity);
-      }
-      return sum;
-    }, 0);
+    return cart.reduce((sum, item) => sum + (item.basePrice * item.quantity), 0);
   }, [cart]);
   
   useEffect(() => {
@@ -92,6 +105,14 @@ export function Product() {
       }
     });
   }, [total, setInvoiceData]);
+
+  if (loading) {
+    return <p>Loading products...</p>;
+  }
+
+  if (error) {
+    return <p>Error loading products: {error}</p>;
+  }
 
   return (
     <Card className="h-full">

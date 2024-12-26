@@ -3,11 +3,24 @@ import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { Eye } from "lucide-react";
 import { Button } from "../ui/button";
+import useInvoiceStore from "@/store/invoiceStore";
 
 interface HeaderProductProps {
   onOpenPreviewChange: (value: boolean) => void;
 }
 export default function HeaderProduct(props: HeaderProductProps) {
+  const { invoiceData, setInvoiceData } = useInvoiceStore((state) => ({
+    invoiceData: state.getInvoiceData(),
+    setInvoiceData: state.setInvoiceData,
+  }));
+  const handleInvoiceName = (value: string) => {
+    setInvoiceData({
+      invoice: {
+        ...invoiceData?.invoice,
+        name: value
+      }
+    });
+  };
   return (
      <Card className="w-full mb-6">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-7">
@@ -24,6 +37,8 @@ export default function HeaderProduct(props: HeaderProductProps) {
                 <div className="relative">
                   <Input
                     id="invoice-name"
+                    value={invoiceData?.invoice?.name ?? ''}
+                    onChange={(e) => handleInvoiceName(e.target.value)}
                     placeholder="Enter invoice name"
                     defaultValue="Spencers Order Invoice"
                     className="pr-8"

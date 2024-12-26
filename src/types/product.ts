@@ -1,4 +1,5 @@
 export interface ProductVariant {
+  id?: string;
   size?: string;
   flavor?: string;
   price?: number
@@ -15,7 +16,21 @@ export interface Product {
   variants?: ProductVariant[]
   thumbnails?: string[]
 }
+export interface AddToCart {
+  product: Product;
+  selectedVariant?: ProductVariant;
+}
 
+export interface DeleteToCart {
+  productId: string;
+  variantId: string | null;
+}
+
+export interface UpdateQuantity {
+  productId: string;
+  variantId: string | null;
+  newQuantity: number;
+}
 export interface CartItem {
   productId: string;
   basePrice: number;
@@ -38,8 +53,8 @@ export interface ProductCatalogProps {
   onCategoryChange: (categories: string[]) => void
   onPageChange: (page: number) => void
   onItemsPerPageChange: (itemsPerPage: number) => void
-  onAddToCart: (item: CartItem) => void
-  onUpdateQuantity: (productId: string, newQuantity: number) => void;
+  onAddToCart: ({product, selectedVariant}:AddToCart) => void
+  onUpdateQuantity: ({productId, variantId, newQuantity}: UpdateQuantity) => void;
 }
 
 export interface ProductProps {
