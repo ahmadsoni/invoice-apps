@@ -15,9 +15,9 @@ import { DataPriceInvoiceInterface, DataProductInvoiceInterface, InvoicePdfInter
 Font.register({
 	family: "Inter",
 	fonts: [
-		{ src: "@/assets/font/Inter/Inter-Regular.ttf", fontWeight: "normal" },
-		{ src: "@/assets/font/Inter/Inter-Medium.ttf", fontWeight: "medium" },
-		{ src: "@/assets/font/Inter/Inter-Bold.ttf", fontWeight: "bold" },
+		{ src: "/src/assets/font/Inter/Inter-Regular.ttf", fontWeight: "normal" },
+		{ src: "/src/assets/font/Inter/Inter-Medium.ttf", fontWeight: "medium" },
+		{ src: "/src/assets/font/Inter/Inter-Bold.ttf", fontWeight: "bold" },
 	],
 });
 
