@@ -17,7 +17,6 @@ import { db } from "@/lib/firebase";
 import { collection, doc } from "firebase/firestore";
 import useEditorModeStore from "@/store/editorModeStore";
 import { InvoiceData } from "@/types/invoice";
-import { PDFInvoice } from "./pdf-view/PDFInvoice";
 import { PDFPreview } from "./pdf-view/PDFPreview";
 
 
@@ -33,7 +32,6 @@ export function CreateInvoice() {
    const { mode, id } = useEditorModeStore();
    const newInvoiceKey = invoiceRef.id;
    const [userUUID, setUserUUID] = useState('');
-   const [isPdfReady, setIsPdfReady] = useState(false);
    const [invoiceKey, setInvoiceKey] = useState('')
    const [openPreview, setOpenPreview] = useState(false);
    const[isLoading, setIsloading] = useState(false);

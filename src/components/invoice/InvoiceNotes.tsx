@@ -57,9 +57,8 @@ export function InvoiceNotes() {
     invoiceData: state.getInvoiceData(),
     setInvoiceData: state.setInvoiceData,
   }));
-  
   const customerCharge =
-  invoiceData?.payment?.netPayment === undefined ?? invoiceData?.payment?.transactionFee === undefined
+  invoiceData?.payment?.netPayment === undefined || invoiceData?.payment?.transactionFee === undefined
     ? 0
     : (invoiceData!.payment!.netPayment ?? 0) - (invoiceData.payment.transactionFee ?? 0);
 
