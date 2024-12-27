@@ -9,4 +9,15 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  optimizeDeps: {
+    include: ['react-pdf', 'pdfjs-dist']
+  },
+  build: {
+    commonjsOptions: {
+      include: [/node_modules/]
+    }
+  },
+  esbuild: {
+    logOverride: { 'nullish-coalescing': 'silent' },
+  },
 });

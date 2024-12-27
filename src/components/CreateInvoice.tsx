@@ -17,6 +17,10 @@ import { db } from "@/lib/firebase";
 import { collection, doc } from "firebase/firestore";
 import useEditorModeStore from "@/store/editorModeStore";
 import { InvoiceData } from "@/types/invoice";
+import { PDFInvoice } from "./pdf-view/PDFInvoice";
+import { PDFPreview } from "./pdf-view/PDFPreview";
+
+
 
 
 
@@ -29,6 +33,7 @@ export function CreateInvoice() {
    const { mode, id } = useEditorModeStore();
    const newInvoiceKey = invoiceRef.id;
    const [userUUID, setUserUUID] = useState('');
+   const [isPdfReady, setIsPdfReady] = useState(false);
    const [invoiceKey, setInvoiceKey] = useState('')
    const [openPreview, setOpenPreview] = useState(false);
    const[isLoading, setIsloading] = useState(false);
@@ -152,7 +157,12 @@ export function CreateInvoice() {
         <DialogHeader>
           <DialogTitle className="font-bold text-2xl mb-3">Invoice Preview</DialogTitle>
           <DialogDescription>
-            {/* <MyDocument /> */}
+            <div className="flex flex-col items-center space-y-4">
+                <PDFPreview data={invoiceData} />
+                {/* {isPdfReady && (
+                  <p className="text-green-600 text-sm">PDF is ready for download!</p>
+                )} */}
+              </div>
           </DialogDescription>
         </DialogHeader>
       </DialogContent>

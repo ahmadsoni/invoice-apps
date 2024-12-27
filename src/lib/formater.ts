@@ -1,3 +1,5 @@
+import dayjs from "dayjs";
+
  export const formatToRupiah = (amount: number): string => {
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
@@ -15,3 +17,10 @@
     maximumFractionDigits: 2
   }).format(amount);
 };
+
+
+
+export const formatDate = (date: string | undefined) => {
+  return date ? dayjs(date).format("DD/MM/YYYY") : "-";
+};
+
